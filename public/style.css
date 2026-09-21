@@ -14,3 +14,5 @@
 @media(max-width:560px){.taskgrid{grid-template-columns:1fr}.ai-studio-head{display:grid}.wallet-chip{width:max-content}.chat-messages{padding:15px}.chatmsg{max-width:94%}.composer-actions{align-items:stretch;flex-direction:column}.ai-composer .btn{width:100%}.model-control{display:grid}.model-control select{min-width:0;width:100%}}
 @supports (-webkit-touch-callout:none){.ai-composer textarea,.model-control select{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.quick,.taskcard{transition:none}}
+
+.dev-snippet{margin:12px 18px 0;border:1px solid var(--line);border-radius:14px;background:#0b0e13;overflow:hidden}.dev-snippet summary{cursor:pointer;padding:11px 13px;color:var(--muted);font-size:12px;list-style:none}.dev-snippet summary::-webkit-details-marker{display:none}.dev-snippet pre{margin:0;border-top:1px solid var(--line);padding:14px;direction:ltr;text-align:left;white-space:pre-wrap;overflow:auto;color:#c9f6d7;font:12px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace}
