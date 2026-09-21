@@ -51,12 +51,12 @@ function adminGuard(req,res,next){if(!req.user)return res.redirect('/login');if(
 function workspaceCards(ws){const m={api:[['ساخت API Key','برای اپ، تست یا محیط production'],['Quickstart','Python، Node و cURL'],['مدل‌ها','قیمت، قابلیت و route']],automation:[['کلید پروژه','برای هر مشتری یک کلید'],['n8n','الگوهای اتصال سریع'],['Telegram','ربات با یک API']],production:[['هزینه زنده','Cost و Revenue'],['Budget','کنترل مصرف کلیدها'],['Reliability','آماده برای fallback']],business:[['تولید محتوا','محصول، SEO و شبکه اجتماعی'],['تحلیل فایل','اسناد و PDF'],['Bulk','کارهای حجمی']],creative:[['تصویر','Text to Image'],['ویدئو','مدل‌های Video'],['تاریخچه','هزینه هر خروجی']],simple:[['گفت‌وگو','سؤال و جواب'],['نوشتن','متن و بازنویسی'],['ساخت تصویر','بدون درگیری با اسم مدل']]};return (m[ws]||m.simple).map(x=>`<div class="quick"><b>${x[0]}</b><small>${x[1]}</small></div>`).join('')}
 function workspaceMenu(ws){
  const menus={
-  api:[['/dashboard','نمای کلی'],['/dashboard/ai','Playground'],['/dashboard/api-keys','کلیدهای API'],['/dashboard/models','مدل‌ها'],['/dashboard/usage','مصرف و لاگ‌ها']],
-  automation:[['/dashboard','نمای کلی'],['/dashboard/ai','آزمایش AI'],['/dashboard/api-keys','کلیدهای پروژه'],['/dashboard/usage','مصرف پروژه‌ها']],
-  production:[['/dashboard','نمای کلی'],['/dashboard/ai','Playground'],['/dashboard/usage','پایش مصرف'],['/dashboard/models','مدل‌ها'],['/dashboard/api-keys','کلیدهای Production']],
-  business:[['/dashboard','خانه'],['/dashboard/ai?mode=write','تولید محتوا'],['/dashboard/ai?mode=summarize','خلاصه و تحلیل'],['/dashboard/ai?mode=translate','ترجمه'],['/dashboard/usage','مصرف من']],
-  creative:[['/dashboard','استودیو'],['/dashboard/ai?mode=creative','دستیار خلاق'],['/dashboard/usage','تاریخچه هزینه']],
-  simple:[['/dashboard','خانه'],['/dashboard/ai','گفت‌وگو با AI'],['/dashboard/ai?mode=write','نوشتن'],['/dashboard/ai?mode=translate','ترجمه'],['/dashboard/ai?mode=summarize','خلاصه‌سازی'],['/dashboard/usage','مصرف من']]
+  api:[['/dashboard','نمای کلی'],['/dashboard/ai','Playground'],['/dashboard/api-keys','کلیدهای API'],['/dashboard/models','مدل‌ها'],['/dashboard/usage','Request Logs']],
+  automation:[['/dashboard/automation','پروژه‌ها و مشتری‌ها'],['/dashboard/ai','آزمایش AI'],['/dashboard/usage','مصرف پروژه‌ها']],
+  production:[['/dashboard/production','سلامت Production'],['/dashboard/ai','Playground'],['/dashboard/usage','Request Logs'],['/dashboard/models','مدل‌ها'],['/dashboard/api-keys','کلیدهای Production']],
+  business:[['/dashboard/business','ابزارهای کسب‌وکار'],['/dashboard/usage','مصرف و هزینه']],
+  creative:[['/dashboard/creative','Creative Studio'],['/dashboard/usage','تاریخچه هزینه']],
+  simple:[['/dashboard','خانه'],['/dashboard/ai','گفت‌وگو'],['/dashboard/usage','مصرف من']]
  };
  return menus[ws]||menus.simple;
 }
@@ -64,7 +64,7 @@ function appShell(req,title,content){
  const u=req.user;const ws=u.workspace||'simple';const admin=u.role==='admin';
  const opts=Object.entries(WORKSPACES).map(([k,v])=>`<option value="${k}" ${ws===k?'selected':''}>${v}</option>`).join('');
  const links=workspaceMenu(ws).map(([href,label])=>`<a href="${href}">${label}</a>`).join('');
- return base(title,`<div class="app"><aside><a href="/dashboard" class="brand"><span class="brandmark">B</span><b>Bavaan AI</b></a><div class="workspace-name">${WORKSPACES[ws]}</div><div class="sidegroup"><span>فضای کار</span>${links}<a href="/dashboard/billing">کیف پول</a><a href="/dashboard/settings">تنظیمات</a></div>${admin?`<div class="sidegroup"><span>مدیریت</span><a href="/admin">داشبورد ادمین</a><a href="/admin/finance">مالی</a><a href="/admin/users">کاربران</a><a href="/admin/models">مدل‌ها و Providerها</a></div>`:''}</aside><main><div class="topbar"><form method="post" action="/workspace"><input type="hidden" name="_csrf" value="${csrf(req)}"><select class="workspace-select" name="workspace" onchange="this.form.submit()">${opts}</select></form><div class="topuser"><span>${esc(u.email)}</span><a href="/logout">خروج</a></div></div><nav class="mobile-workspace-nav" aria-label="منوی فضای کار">${links}<a href="/dashboard/billing">کیف پول</a></nav>${flash(req)}${content}</main></div>`,{user:u,wide:true})
+ return base(title,`<div class="app"><aside><a href="/dashboard" class="brand"><span class="brandmark">B</span><b>Bavaan AI</b></a><div class="workspace-name">${WORKSPACES[ws]}</div><div class="sidegroup"><span>فضای کار</span>${links}<a href="/dashboard/billing">کیف پول</a><a href="/dashboard/settings">تنظیمات</a></div>${admin?`<div class="sidegroup"><span>مدیریت</span><a href="/admin">داشبورد ادمین</a><a href="/admin/finance">مالی</a><a href="/admin/users">کاربران</a><a href="/admin/models">مدل‌ها و Providerها</a></div>`:''}</aside><main><div class="topbar"><form class="workspace-switcher" method="post" action="/workspace"><input type="hidden" name="_csrf" value="${csrf(req)}"><span>فضای کار</span><select class="workspace-select" aria-label="تغییر فضای کار" name="workspace" onchange="this.form.submit()">${opts}</select></form><div class="topuser"><span>${esc(u.email)}</span><a href="/logout">خروج</a></div></div><nav class="mobile-workspace-nav" aria-label="منوی فضای کار">${links}<a href="/dashboard/billing">کیف پول</a></nav>${flash(req)}${content}</main></div>`,{user:u,wide:true})
 }
 
 async function initDb(){await pool.query(`
@@ -77,6 +77,9 @@ create table if not exists wallet_transactions(id text primary key,user_id text 
 create table if not exists provider_expenses(id text primary key,provider_id text not null references providers(id),amount_usd numeric(18,6) not null default 0,amount_toman numeric(18,2) not null default 0,note text,created_at timestamptz not null default now());
 create table if not exists ai_conversations(id text primary key,user_id text not null references users(id) on delete cascade,workspace text not null default 'simple',title text not null default 'گفت‌وگوی جدید',model_slug text,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
 create table if not exists ai_messages(id text primary key,conversation_id text not null references ai_conversations(id) on delete cascade,role text not null,content text not null,input_tokens int not null default 0,output_tokens int not null default 0,charged_toman numeric(18,2) not null default 0,created_at timestamptz not null default now());
+create table if not exists automation_projects(id text primary key,user_id text not null references users(id) on delete cascade,name text not null,client_name text,budget_toman numeric(18,2),created_at timestamptz not null default now(),updated_at timestamptz not null default now());
+alter table users add column if not exists monthly_budget_toman numeric(18,2);
+alter table api_keys add column if not exists project_id text references automation_projects(id) on delete set null;
 `);
  let {rows}=await pool.query("select id from providers where key='cloudflare'");let pid=rows[0]?.id;if(!pid){pid=crypto.randomUUID();await pool.query('insert into providers(id,key,name,notes) values($1,$2,$3,$4)',[pid,'cloudflare','Cloudflare AI Gateway','Unified Billing / Workers AI. Configure commercial rights before resale.'])}
  const seeds=[['gpt','GPT','openai/gpt-5.5','general,code'],['claude','Claude','anthropic/claude-sonnet-4-5','reasoning,writing,code'],['gemini','Gemini','google-ai-studio/gemini-2.5-flash','fast,business'],['deepseek','DeepSeek','deepseek/deepseek-chat','value,code'],['llama','Llama','@cf/meta/llama-3.3-70b-instruct-fp8-fast','open,fast']];
@@ -98,6 +101,25 @@ function assistantText(data){
  if(typeof content==='string')return content;
  if(Array.isArray(content))return content.map(x=>typeof x==='string'?x:(x?.text||'')).join('\n').trim();
  return data?.output_text||data?.response?.output_text||'';
+}
+async function currentMonthSpend(userId){
+ const {rows}=await pool.query("select coalesce(sum(charged_toman),0) spend from usage_records where user_id=$1 and status='success' and created_at>=date_trunc('month',now())",[userId]);
+ return Number(rows[0]?.spend||0);
+}
+async function enforceMonthlyBudget(userId,nextCharge){
+ const {rows}=await pool.query('select monthly_budget_toman from users where id=$1',[userId]);
+ const limit=Number(rows[0]?.monthly_budget_toman||0);
+ if(limit<=0)return;
+ const spent=await currentMonthSpend(userId);
+ if(spent+Number(nextCharge||0)>limit){const e=new Error('سقف بودجه ماهانه این حساب رد می‌شود.');e.status=402;throw e}
+}
+async function logFailedUsage({userId,apiKeyId=null,model,started,requestId=null}){
+ if(!model)return;
+ try{await pool.query("insert into usage_records(id,user_id,api_key_id,provider_id,model_id,input_tokens,output_tokens,cost_usd,charged_toman,latency_ms,status,request_id) values($1,$2,$3,$4,$5,0,0,0,0,$6,'failed',$7)",[crypto.randomUUID(),userId,apiKeyId,model.provider_id,model.id,Date.now()-started,requestId])}catch(_){}
+}
+function buildApiKey(){
+ const raw='bv_'+crypto.randomBytes(24).toString('hex');
+ return {raw,hash:crypto.createHash('sha256').update(raw).digest('hex'),prefix:raw.slice(0,11)};
 }
 async function runPaidChat({userId,modelSlug='auto',messages,apiKeyId=null}){
  const account=process.env.CLOUDFLARE_ACCOUNT_ID,token=process.env.CLOUDFLARE_API_TOKEN;
@@ -123,6 +145,7 @@ async function runPaidChat({userId,modelSlug='auto',messages,apiKeyId=null}){
  const costUsd=input/1e6*Number(model.input_cost_m_usd)+output/1e6*Number(model.output_cost_m_usd);
  const charge=Math.max(1,Math.ceil(costUsd*USD_TO_TOMAN*(1+Number(model.markup_percent)/100)));
  const usageId=crypto.randomUUID();
+ await enforceMonthlyBudget(userId,charge);
  await pool.query('begin');
  try{
   const bal=await pool.query('select wallet_balance_toman,status from users where id=$1 for update',[userId]);
@@ -168,8 +191,14 @@ app.get('/dashboard',guard,async(req,res)=>{
   hero=`<div class="workspacehero"><div class="card hero-card"><span class="badge">Developer Workspace</span><h2>از Playground تا Production</h2><p>مدل را تست کن، هزینه و latency را ببین، بعد همان درخواست را با API Key وارد محصولت کن.</p><div class="quickgrid"><a class="quick" href="/dashboard/ai"><b>Playground واقعی</b><small>ارسال درخواست و دیدن Token / Cost / Latency</small></a><a class="quick" href="/dashboard/api-keys"><b>کلیدهای API</b><small>کلید جدا برای تست و Production</small></a><a class="quick" href="/dashboard/models"><b>مدل‌های فعال</b><small>شناسه API و Provider</small></a></div></div><div class="card"><h3>شروع سریع</h3><p class="sub">اول یک مدل را در Playground تست کن.</p><a class="btn primary wide" href="/dashboard/ai">باز کردن Playground</a></div></div>`;
  }else if(ws==='simple'){
   hero=`<div class="simple-home"><div class="simple-welcome"><span class="badge">فضای ساده</span><h2>امروز می‌خوای چه کاری انجام بدی؟</h2><p>لازم نیست مدل انتخاب کنی. Bavaan پشت صحنه یک مدل مناسب و فعال را استفاده می‌کند.</p></div><div class="taskgrid"><a href="/dashboard/ai" class="taskcard"><b>گفت‌وگو و سؤال</b><span>هر چیزی بپرس و ادامه بده.</span></a><a href="/dashboard/ai?mode=write" class="taskcard"><b>نوشتن و بازنویسی</b><span>ایمیل، کپشن، متن و ایده.</span></a><a href="/dashboard/ai?mode=translate" class="taskcard"><b>ترجمه</b><span>ترجمه روان با حفظ معنی.</span></a><a href="/dashboard/ai?mode=summarize" class="taskcard"><b>خلاصه‌سازی</b><span>متن طولانی را کوتاه و قابل استفاده کن.</span></a></div></div>`;
- }else{
-  hero=`<div class="workspacehero"><div class="card hero-card"><span class="badge">فضای پیشنهادی تو</span><h2>${WORKSPACES[ws]}</h2><p>ابزارها بر اساس نوع استفاده‌ات مرتب شده‌اند و Wallet و Usage بین همه Workspaceها مشترک است.</p><div class="quickgrid">${workspaceCards(ws)}</div></div><div class="card"><h3>AI Studio</h3><p>برای کار متنی همین حالا از محیط AI استفاده کن.</p><a class="btn primary wide" href="/dashboard/ai">باز کردن AI Studio</a></div></div>`;
+ }else if(ws==='automation'){
+  hero=`<div class="workspacehero"><div class="card hero-card"><span class="badge">Automation Workspace</span><h2>هر مشتری، یک پروژه، یک کلید و یک هزینه مشخص.</h2><p>پروژه بساز، برایش API Key جدا بگیر و مصرف همان مشتری را جدا ببین.</p><div class="quickgrid"><a class="quick" href="/dashboard/automation"><b>پروژه‌ها و مشتری‌ها</b><small>Client، Budget، Key و Spend</small></a><a class="quick" href="/dashboard/ai"><b>آزمایش AI</b><small>قبل از اتصال به n8n یا Bot تست کن</small></a><a class="quick" href="/dashboard/usage"><b>مصرف پروژه‌ها</b><small>Request-level log</small></a></div></div><div class="card"><h3>اول پروژه را بساز</h3><p class="sub">برای هر مشتری کلید جدا بهتر از یک کلید مشترک است.</p><a class="btn primary wide" href="/dashboard/automation">مدیریت پروژه‌ها</a></div></div>`;
+ }else if(ws==='production'){
+  hero=`<div class="workspacehero"><div class="card hero-card"><span class="badge">Production Workspace</span><h2>اول سلامت سرویس، بعد Playground.</h2><p>Latency، خطا، هزینه ماهانه، بودجه و وضعیت routeها را از داده واقعی درخواست‌ها ببین.</p><div class="quickgrid"><a class="quick" href="/dashboard/production"><b>Production Health</b><small>Error rate، Latency و Budget</small></a><a class="quick" href="/dashboard/usage"><b>Request Logs</b><small>موارد کند و ناموفق</small></a><a class="quick" href="/dashboard/models"><b>Routing readiness</b><small>مدل‌های فعال و fallback</small></a></div></div><div class="card"><h3>پایش Production</h3><p class="sub">Chatbox صفحه اصلی Production نیست.</p><a class="btn primary wide" href="/dashboard/production">باز کردن مانیتورینگ</a></div></div>`;
+ }else if(ws==='business'){
+  hero=`<div class="workspacehero"><div class="card hero-card"><span class="badge">Business Workspace</span><h2>از «کار» شروع کن، نه از مدل.</h2><p>ابزارهای آماده برای متن محصول، شبکه اجتماعی، خلاصه، تحلیل و ترجمه.</p><div class="quickgrid"><a class="quick" href="/dashboard/business"><b>ابزارهای کسب‌وکار</b><small>Templateهای آماده و خروجی سریع</small></a><a class="quick" href="/dashboard/usage"><b>هزینه کارها</b><small>ببین هر خروجی چقدر هزینه داشته</small></a></div></div><div class="card"><h3>کار تکراری داری؟</h3><p class="sub">از یک Template شروع کن و نتیجه را بعداً به Bulk گسترش می‌دهیم.</p><a class="btn primary wide" href="/dashboard/business">انتخاب کار</a></div></div>`;
+ }else if(ws==='creative'){
+  hero=`<div class="workspacehero"><div class="card hero-card"><span class="badge">Creative Workspace</span><h2>Prompt Lab و Storyboard واقعی؛ بدون ادعای Generation ناقص.</h2><p>فعلاً ایده، Prompt تصویر/ویدئو، Storyboard و Caption می‌سازی. ساخت مستقیم تصویر/ویدئو تا اتصال Provider رسانه‌ای غیرفعال است.</p><div class="quickgrid"><a class="quick" href="/dashboard/creative"><b>Creative Studio</b><small>Prompt، Storyboard و Concept</small></a><a class="quick" href="/dashboard/usage"><b>هزینه جلسات</b><small>مصرف دستیار خلاق</small></a></div></div><div class="card"><h3>وضعیت قابلیت‌ها</h3><p>متن و Prompt: <b class="metricgood">فعال</b></p><p>Image/Video generation: <b>در انتظار Provider</b></p></div></div>`;
  }
  res.send(appShell(req,'داشبورد',`<div class="dash"><div class="dashhead"><div><h1>سلام ${esc(req.user.name||'')}</h1><div class="sub">${WORKSPACES[ws]}</div></div></div><div class="stats"><div class="stat"><span>موجودی کیف پول</span><b>${toman(req.user.wallet_balance_toman)}</b></div><div class="stat"><span>مصرف کل</span><b>${toman(x.spend)}</b></div><div class="stat"><span>Request</span><b>${Number(x.requests).toLocaleString('fa-IR')}</b></div><div class="stat"><span>میانگین Latency</span><b>${Math.round(Number(x.latency||0)).toLocaleString('fa-IR')} ms</b></div></div>${hero}</div>`))
 });
@@ -189,13 +218,21 @@ app.get('/dashboard/ai',guard,async(req,res)=>{
   conversation=cq.rows[0]||null;
   if(conversation){const mq=await pool.query('select role,content,charged_toman,created_at from ai_messages where conversation_id=$1 order by created_at asc limit 100',[conversation.id]);messages=mq.rows}
  }
- const developer=ws==='api'||ws==='production'||ws==='automation';
+ const developer=ws==='api'||ws==='production';
  const modelOptions=models.rows.map(m=>`<option value="${esc(m.slug)}" ${conversation?.model_slug===m.slug?'selected':''}>${esc(m.display_name)} · ${esc(m.slug)}</option>`).join('');
  const defaultModel=conversation?.model_slug||models.rows[0]?.slug||'';
  const recentHtml=recent.rows.map(x=>`<a href="/dashboard/ai?c=${encodeURIComponent(x.id)}" class="conversation-link ${conversation?.id===x.id?'active':''}"><b>${esc(x.title)}</b><small>${new Date(x.updated_at).toLocaleDateString('fa-IR')}</small></a>`).join('');
  const msgHtml=messages.map(m=>`<div class="chatmsg ${m.role==='user'?'user':'assistant'}"><div class="chatbubble">${esc(m.content).replace(/\n/g,'<br>')}</div>${m.role==='assistant'&&Number(m.charged_toman)>0?`<small>${toman(m.charged_toman)}</small>`:''}</div>`).join('');
  const modeTabs=[['chat','گفت‌وگو'],['write','نوشتن'],['translate','ترجمه'],['summarize','خلاصه‌سازی'],['creative','ایده‌پردازی']].map(([k,l])=>`<a class="modechip ${mode===k?'active':''}" href="/dashboard/ai?mode=${k}">${l}</a>`).join('');
- res.send(appShell(req,developer?'Playground':'Bavaan AI',`<div class="dash ai-page"><div class="ai-layout"><aside class="conversation-panel"><a class="btn primary wide" href="/dashboard/ai?mode=${mode}">گفت‌وگوی جدید</a><div class="conversation-list">${recentHtml||'<p class="sub">هنوز گفت‌وگویی نداری.</p>'}</div></aside><section class="ai-studio"><div class="ai-studio-head"><div><span class="badge">${developer?'Developer Playground':'Bavaan AI'}</span><h1>${developer?'مدل را تست کن و هزینه را همان لحظه ببین':'چه کاری می‌خوای انجام بدی؟'}</h1><p class="sub">${developer?'پاسخ، Token، Cost، Latency و Request ID در همین صفحه ثبت می‌شود.':'مدل مناسب پشت صحنه انتخاب می‌شود و هزینه از اعتبارت کم می‌شود.'}</p></div><div class="wallet-chip">موجودی: <b>${toman(req.user.wallet_balance_toman)}</b></div></div><div class="modechips">${modeTabs}</div>${developer?`<label class="model-control">مدل<select id="aiModel">${modelOptions}</select></label><details class="dev-snippet"><summary>نمونه کد همین مدل</summary><pre id="apiSnippet" data-base="${APP_URL}" data-model="${esc(defaultModel)}">curl ${APP_URL}/api/v1/chat/completions \\\n-H "Authorization: Bearer bv_YOUR_KEY" \\\n-H "Content-Type: application/json" \\\n-d '{"model":"${esc(defaultModel)}","messages":[{"role":"user","content":"سلام"}]}'</pre></details>`:''}<div id="chatMessages" class="chat-messages">${msgHtml||'<div class="chat-empty"><b>آماده‌ام.</b><span>درخواستت را پایین بنویس.</span></div>'}</div><form id="aiComposer" class="ai-composer" data-csrf="${csrf(req)}" data-conversation="${conversation?.id||''}" data-mode="${mode}" data-developer="${developer?'1':'0'}"><textarea id="aiPrompt" rows="3" maxlength="12000" placeholder="${mode==='write'?'مثلاً: یک متن معرفی کوتاه برای محصولم بنویس…':mode==='translate'?'متنی که می‌خوای ترجمه بشه را اینجا بنویس…':mode==='summarize'?'متن طولانی را اینجا قرار بده…':'پیامت را بنویس…'}" required></textarea><div class="composer-actions"><div id="aiMeta" class="ai-meta">هزینه بعد از پاسخ نمایش داده می‌شود.</div><button id="aiSend" class="btn primary" type="submit">ارسال</button></div></form></section></div></div><script defer src="/static/workspace-ai.js?v=${esc(ASSET_VERSION)}"></script>`))
+ const suggestions={
+  chat:['برای یک تصمیم مزایا و معایب بنویس','این موضوع را ساده توضیح بده','برای امروز یک برنامه کوتاه بساز'],
+  write:['یک کپشن حرفه‌ای بنویس','این متن را رسمی‌تر بازنویسی کن','یک ایمیل کوتاه و مودبانه بنویس'],
+  translate:['این متن را به انگلیسی روان ترجمه کن','این متن را به آلمانی رسمی ترجمه کن','ترجمه کن و لحن را طبیعی نگه دار'],
+  summarize:['این متن را در ۵ نکته خلاصه کن','نتیجه و اقدام‌های بعدی را استخراج کن','یک خلاصه مدیریتی کوتاه بساز'],
+  creative:['برای یک ویدیوی کوتاه ایده بده','یک Prompt حرفه‌ای تصویر بنویس','Storyboard سه‌صحنه‌ای بساز']
+ };
+ const suggestionHtml=(suggestions[mode]||suggestions.chat).map(x=>`<button type="button" class="prompt-suggestion" data-prompt="${esc(x)}">${esc(x)}</button>`).join('');
+ res.send(appShell(req,developer?'Playground':'Bavaan AI',`<div class="dash ai-page"><div class="ai-layout"><aside class="conversation-panel"><a class="btn primary wide" href="/dashboard/ai?mode=${mode}">گفت‌وگوی جدید</a><div class="conversation-list">${recentHtml||'<p class="sub">هنوز گفت‌وگویی نداری.</p>'}</div></aside><section class="ai-studio"><div class="ai-studio-head"><div><span class="badge">${developer?'Developer Playground':'Bavaan AI'}</span><h1>${developer?'مدل را تست کن و هزینه را همان لحظه ببین':'چه کاری می‌خوای انجام بدی؟'}</h1><p class="sub">${developer?'پاسخ، Token، Cost، Latency و Request ID در همین صفحه ثبت می‌شود.':'مدل مناسب پشت صحنه انتخاب می‌شود و هزینه از اعتبارت کم می‌شود.'}</p></div><div class="wallet-chip">موجودی: <b>${toman(req.user.wallet_balance_toman)}</b></div></div><div class="modechips">${modeTabs}</div>${developer?`<label class="model-control">مدل<select id="aiModel">${modelOptions}</select></label><details class="dev-snippet"><summary>نمونه کد همین مدل</summary><pre id="apiSnippet" data-base="${APP_URL}" data-model="${esc(defaultModel)}">curl ${APP_URL}/api/v1/chat/completions \\\n-H "Authorization: Bearer bv_YOUR_KEY" \\\n-H "Content-Type: application/json" \\\n-d '{"model":"${esc(defaultModel)}","messages":[{"role":"user","content":"سلام"}]}'</pre></details>`:''}<div id="chatMessages" class="chat-messages">${msgHtml||`<div class="chat-empty"><b>از یکی از این‌ها شروع کن</b><div class="prompt-suggestions">${suggestionHtml}</div></div>`}</div><form id="aiComposer" class="ai-composer" data-csrf="${csrf(req)}" data-conversation="${conversation?.id||''}" data-mode="${mode}" data-developer="${developer?'1':'0'}"><textarea id="aiPrompt" rows="3" maxlength="12000" placeholder="${mode==='write'?'مثلاً: یک متن معرفی کوتاه برای محصولم بنویس…':mode==='translate'?'متنی که می‌خوای ترجمه بشه را اینجا بنویس…':mode==='summarize'?'متن طولانی را اینجا قرار بده…':'پیامت را بنویس…'}" required></textarea><div class="composer-actions"><div id="aiMeta" class="ai-meta">هزینه بعد از پاسخ نمایش داده می‌شود.</div><button id="aiSend" class="btn primary" type="submit">ارسال</button></div></form></section></div></div><script defer src="/static/workspace-ai.js?v=${esc(ASSET_VERSION)}"></script>`))
 });
 
 app.post('/dashboard/ai/chat',guard,checkCsrf,async(req,res)=>{
@@ -207,7 +244,7 @@ app.post('/dashboard/ai/chat',guard,checkCsrf,async(req,res)=>{
   if(!conv){conv={id:crypto.randomUUID(),user_id:req.user.id,workspace:ws,title:prompt.replace(/\s+/g,' ').slice(0,58)+(prompt.length>58?'…':''),model_slug:null};await pool.query('insert into ai_conversations(id,user_id,workspace,title) values($1,$2,$3,$4)',[conv.id,req.user.id,ws,conv.title])}
   const history=await pool.query("select role,content from ai_messages where conversation_id=$1 and role in ('user','assistant') order by created_at desc limit 18",[conv.id]);
   const chronological=history.rows.reverse();
-  const developer=ws==='api'||ws==='production'||ws==='automation';
+  const developer=ws==='api'||ws==='production';
   const requestedModel=developer&&req.body.model?String(req.body.model):'auto';
   const chatMessages=[{role:'system',content:modeInstruction(mode)},...chronological,{role:'user',content:prompt}];
   const result=await runPaidChat({userId:req.user.id,modelSlug:requestedModel,messages:chatMessages});
