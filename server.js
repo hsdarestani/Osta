@@ -15,7 +15,7 @@ const FREE_CREDIT=Number(process.env.FREE_CREDIT_TOMAN||50000);
 const USD_TO_TOMAN=Number(process.env.USD_TO_TOMAN||100000);
 const ADMIN_EMAIL=(process.env.ADMIN_EMAIL||'').toLowerCase();
 const APP_URL=process.env.APP_URL||'https://ai.bavaan.ir';
-const ASSET_VERSION=process.env.ASSET_VERSION||'dev';
+const ASSET_VERSION=process.env.ASSET_VERSION||String(Date.now());
 const CLOUDFLARE_GATEWAY_ID=(process.env.CLOUDFLARE_GATEWAY_ID||'default').trim()||'default';
 const SEGMENTS={
  developer:{workspace:'api',title:'می‌خوام API رو به اپ یا سایتم وصل کنم',desc:'کلید API، مدل‌ها، لاگ مصرف و مستندات فنی.'},
