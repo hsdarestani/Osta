@@ -109,3 +109,42 @@
   .integration-node{inline-size:94px;font-size:.68rem}
   .integration-stage{min-block-size:530px}
 }
+
+/* Responsive polish for the public landing */
+@media (max-width:1024px){
+  .integration-stage{min-block-size:460px}
+  .stack-shell{min-block-size:320px}
+}
+@media (max-width:768px){
+  .hero-shell{background:
+    radial-gradient(circle at 50% 0%,hsl(var(--primary)/.10),transparent 30%),
+    hsl(var(--background))}
+  .beam-frame{max-inline-size:100%}
+  .terminal-grid{overflow:hidden}
+  .integration-stage{min-block-size:500px}
+  .integration-node{inline-size:108px}
+  .integration-hub{inline-size:100px;block-size:100px}
+  .stack-shell{min-block-size:340px}
+}
+@media (max-width:640px){
+  .marquee-mask{mask-image:none;-webkit-mask-image:none}
+  .integration-stage{min-block-size:460px}
+  .integration-node{inline-size:92px;min-block-size:46px;font-size:.68rem}
+  .integration-hub{inline-size:82px;block-size:82px;border-radius:22px}
+  .node-a{inset-inline-start:3%;inset-block-start:8%}
+  .node-b{inset-inline-end:3%;inset-block-start:8%}
+  .node-c{inset-inline-start:3%;inset-block-end:8%}
+  .node-d{inset-inline-end:3%;inset-block-end:8%}
+  .node-e{inset-block-start:25%}
+  .stack-shell{min-block-size:360px}
+  .stack-card{padding:1rem}
+}
+@media (max-width:420px){
+  .integration-stage{min-block-size:430px}
+  .integration-node{inline-size:84px;padding:.45rem .5rem;font-size:.62rem}
+  .integration-hub{inline-size:76px;block-size:76px}
+  .node-e{inset-block-start:27%}
+  .stack-shell{min-block-size:375px}
+  .stack-card{max-inline-size:calc(100vw - 1.5rem)}
+  .grid-background{background-size:20px 20px}
+}
