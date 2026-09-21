@@ -49,6 +49,7 @@ function flash(req){const x=req.session.flash;delete req.session.flash;return x?
 function guard(req,res,next){if(!req.user)return res.redirect('/login');if(req.user.status==='suspended')return res.status(403).send('Account suspended');next()}
 function adminGuard(req,res,next){if(!req.user)return res.redirect('/login');if(req.user.role!=='admin')return res.redirect('/dashboard');next()}
 function workspaceCards(ws){const m={api:[['ساخت API Key','برای اپ، تست یا محیط production'],['Quickstart','Python، Node و cURL'],['مدل‌ها','قیمت، قابلیت و route']],automation:[['کلید پروژه','برای هر مشتری یک کلید'],['n8n','الگوهای اتصال سریع'],['Telegram','ربات با یک API']],production:[['هزینه زنده','Cost و Revenue'],['Budget','کنترل مصرف کلیدها'],['Reliability','آماده برای fallback']],business:[['تولید محتوا','محصول، SEO و شبکه اجتماعی'],['تحلیل فایل','اسناد و PDF'],['Bulk','کارهای حجمی']],creative:[['تصویر','Text to Image'],['ویدئو','مدل‌های Video'],['تاریخچه','هزینه هر خروجی']],simple:[['گفت‌وگو','سؤال و جواب'],['نوشتن','متن و بازنویسی'],['ساخت تصویر','بدون درگیری با اسم مدل']]};return (m[ws]||m.simple).map(x=>`<div class="quick"><b>${x[0]}</b><small>${x[1]}</small></div>`).join('')}
+function workspaceHome(ws){return ({api:'/dashboard',automation:'/dashboard/automation',production:'/dashboard/production',business:'/dashboard/business',creative:'/dashboard/creative',simple:'/dashboard'}[ws]||'/dashboard')}
 function workspaceMenu(ws){
  const menus={
   api:[['/dashboard','نمای کلی'],['/dashboard/ai','Playground'],['/dashboard/api-keys','کلیدهای API'],['/dashboard/models','مدل‌ها'],['/dashboard/usage','Request Logs']],
@@ -159,6 +160,19 @@ async function runPaidChat({userId,modelSlug='auto',messages,apiKeyId=null}){
  }catch(e){await pool.query('rollback');throw e}
  return {data,text,model,input,output,costUsd,charge,latencyMs:Date.now()-started,requestId:data?.id||usageId};
 }
+function taskInstruction(task){
+ const map={
+  product:'خروجی برای توضیح محصول است: مزیت، ویژگی، کاربرد و CTA را روشن و بدون اغراق بنویس.',
+  social:'خروجی برای شبکه اجتماعی است: کوتاه، قابل انتشار و متناسب با لحن برند بنویس.',
+  seo:'خروجی برای SEO است: ساختار واضح، تیترهای مفید و زبان طبیعی داشته باشد؛ keyword stuffing نکن.',
+  executive:'یک خلاصه مدیریتی با نکات کلیدی، ریسک‌ها و اقدام بعدی بده.',
+  image_prompt:'یک Prompt دقیق برای مدل تولید تصویر بنویس؛ composition، lighting، style، camera و constraints را مشخص کن.',
+  video_prompt:'یک Prompt ویدیویی ساختاریافته با shot، motion، camera، subject و timing بده.',
+  storyboard:'یک Storyboard کوتاه صحنه‌به‌صحنه با هدف هر صحنه بده.',
+  concept:'چند concept متفاوت و قابل اجرا پیشنهاد بده.'
+ };
+ return map[task]||'';
+}
 function modeInstruction(mode){
  const map={
   write:'تو یک دستیار حرفه‌ای نویسندگی فارسی هستی. متن شفاف، طبیعی و متناسب با درخواست کاربر بنویس.',
@@ -179,7 +193,7 @@ app.get('/logout',(req,res)=>req.logout(()=>res.redirect('/')));
 
 app.get('/onboarding',guard,(req,res)=>res.send(base('شروع',`<div class="onboard"><span class="badge">کمتر از یک دقیقه</span><h1>بیشتر برای چه کاری می‌خوای از Bavaan استفاده کنی؟</h1><p class="sub">اسم دسته‌ها مهم نیست؛ چیزی رو انتخاب کن که شبیه خودته. بعداً هم می‌تونی عوضش کنی.</p><form method="post" action="/onboarding"><input type="hidden" name="_csrf" value="${csrf(req)}"><div class="choicegrid">${Object.entries(SEGMENTS).map(([k,s])=>`<label class="choice"><input type="radio" name="segment" value="${k}" required><b>${s.title}</b><span>${s.desc}</span></label>`).join('')}</div><button class="btn primary big">ورود به فضای من</button></form></div>`)));
 app.post('/onboarding',guard,checkCsrf,async(req,res)=>{const s=SEGMENTS[req.body.segment];if(!s)return res.redirect('/onboarding');await pool.query('update users set segment=$1,workspace=$2,onboarding_done=true,updated_at=now() where id=$3',[req.body.segment,s.workspace,req.user.id]);req.user.segment=req.body.segment;req.user.workspace=s.workspace;req.user.onboarding_done=true;res.redirect('/dashboard')});
-app.post('/workspace',guard,checkCsrf,async(req,res)=>{if(!WORKSPACES[req.body.workspace])return res.redirect('/dashboard');await pool.query('update users set workspace=$1,updated_at=now() where id=$2',[req.body.workspace,req.user.id]);req.user.workspace=req.body.workspace;res.redirect(req.get('referer')||'/dashboard')});
+app.post('/workspace',guard,checkCsrf,async(req,res)=>{if(!WORKSPACES[req.body.workspace])return res.redirect('/dashboard');await pool.query('update users set workspace=$1,updated_at=now() where id=$2',[req.body.workspace,req.user.id]);req.user.workspace=req.body.workspace;res.redirect(workspaceHome(req.body.workspace))});
 
 app.get('/dashboard',guard,async(req,res)=>{
  if(!req.user.onboarding_done)return res.redirect('/onboarding');
@@ -208,6 +222,7 @@ app.get('/dashboard/ai',guard,async(req,res)=>{
  const ws=req.user.workspace||'simple';
  const allowedModes=['chat','write','translate','summarize','creative'];
  const mode=allowedModes.includes(String(req.query.mode||''))?String(req.query.mode):'chat';
+ const task=String(req.query.task||'');
  const [models,recent]=await Promise.all([
   pool.query("select slug,display_name,tags,input_cost_m_usd,output_cost_m_usd from models where active=true and modality='text' order by case when tags like '%simple_default%' then 0 else 1 end,display_name"),
   pool.query('select id,title,updated_at from ai_conversations where user_id=$1 order by updated_at desc limit 10',[req.user.id])
@@ -232,13 +247,15 @@ app.get('/dashboard/ai',guard,async(req,res)=>{
   creative:['برای یک ویدیوی کوتاه ایده بده','یک Prompt حرفه‌ای تصویر بنویس','Storyboard سه‌صحنه‌ای بساز']
  };
  const suggestionHtml=(suggestions[mode]||suggestions.chat).map(x=>`<button type="button" class="prompt-suggestion" data-prompt="${esc(x)}">${esc(x)}</button>`).join('');
- res.send(appShell(req,developer?'Playground':'Bavaan AI',`<div class="dash ai-page"><div class="ai-layout"><aside class="conversation-panel"><a class="btn primary wide" href="/dashboard/ai?mode=${mode}">گفت‌وگوی جدید</a><div class="conversation-list">${recentHtml||'<p class="sub">هنوز گفت‌وگویی نداری.</p>'}</div></aside><section class="ai-studio"><div class="ai-studio-head"><div><span class="badge">${developer?'Developer Playground':'Bavaan AI'}</span><h1>${developer?'مدل را تست کن و هزینه را همان لحظه ببین':'چه کاری می‌خوای انجام بدی؟'}</h1><p class="sub">${developer?'پاسخ، Token، Cost، Latency و Request ID در همین صفحه ثبت می‌شود.':'مدل مناسب پشت صحنه انتخاب می‌شود و هزینه از اعتبارت کم می‌شود.'}</p></div><div class="wallet-chip">موجودی: <b>${toman(req.user.wallet_balance_toman)}</b></div></div><div class="modechips">${modeTabs}</div>${developer?`<label class="model-control">مدل<select id="aiModel">${modelOptions}</select></label><details class="dev-snippet"><summary>نمونه کد همین مدل</summary><pre id="apiSnippet" data-base="${APP_URL}" data-model="${esc(defaultModel)}">curl ${APP_URL}/api/v1/chat/completions \\\n-H "Authorization: Bearer bv_YOUR_KEY" \\\n-H "Content-Type: application/json" \\\n-d '{"model":"${esc(defaultModel)}","messages":[{"role":"user","content":"سلام"}]}'</pre></details>`:''}<div id="chatMessages" class="chat-messages">${msgHtml||`<div class="chat-empty"><b>از یکی از این‌ها شروع کن</b><div class="prompt-suggestions">${suggestionHtml}</div></div>`}</div><form id="aiComposer" class="ai-composer" data-csrf="${csrf(req)}" data-conversation="${conversation?.id||''}" data-mode="${mode}" data-developer="${developer?'1':'0'}"><textarea id="aiPrompt" rows="3" maxlength="12000" placeholder="${mode==='write'?'مثلاً: یک متن معرفی کوتاه برای محصولم بنویس…':mode==='translate'?'متنی که می‌خوای ترجمه بشه را اینجا بنویس…':mode==='summarize'?'متن طولانی را اینجا قرار بده…':'پیامت را بنویس…'}" required></textarea><div class="composer-actions"><div id="aiMeta" class="ai-meta">هزینه بعد از پاسخ نمایش داده می‌شود.</div><button id="aiSend" class="btn primary" type="submit">ارسال</button></div></form></section></div></div><script defer src="/static/workspace-ai.js?v=${esc(ASSET_VERSION)}"></script>`))
+ const taskTitles={product:'توضیحات محصول',social:'محتوای شبکه اجتماعی',seo:'محتوای SEO',executive:'خلاصه مدیریتی',image_prompt:'Prompt تصویر',video_prompt:'Prompt ویدئو',storyboard:'Storyboard',concept:'Concept Lab'};
+ const taskTitle=taskTitles[task]||null;
+ res.send(appShell(req,developer?'Playground':'Bavaan AI',`<div class="dash ai-page"><div class="ai-layout"><aside class="conversation-panel"><a class="btn primary wide" href="/dashboard/ai?mode=${mode}">گفت‌وگوی جدید</a><div class="conversation-list">${recentHtml||'<p class="sub">هنوز گفت‌وگویی نداری.</p>'}</div></aside><section class="ai-studio"><div class="ai-studio-head"><div><span class="badge">${developer?'Developer Playground':'Bavaan AI'}</span><h1>${developer?'مدل را تست کن و هزینه را همان لحظه ببین':(taskTitle||'چه کاری می‌خوای انجام بدی؟')}</h1><p class="sub">${developer?'پاسخ، Token، Cost، Latency و Request ID در همین صفحه ثبت می‌شود.':'مدل مناسب پشت صحنه انتخاب می‌شود و هزینه از اعتبارت کم می‌شود.'}</p></div><div class="wallet-chip">موجودی: <b>${toman(req.user.wallet_balance_toman)}</b></div></div><div class="modechips">${modeTabs}</div>${developer?`<label class="model-control">مدل<select id="aiModel">${modelOptions}</select></label><details class="dev-snippet"><summary>نمونه کد همین مدل</summary><pre id="apiSnippet" data-base="${APP_URL}" data-model="${esc(defaultModel)}">curl ${APP_URL}/api/v1/chat/completions \\\n-H "Authorization: Bearer bv_YOUR_KEY" \\\n-H "Content-Type: application/json" \\\n-d '{"model":"${esc(defaultModel)}","messages":[{"role":"user","content":"سلام"}]}'</pre></details>`:''}<div id="chatMessages" class="chat-messages">${msgHtml||`<div class="chat-empty"><b>از یکی از این‌ها شروع کن</b><div class="prompt-suggestions">${suggestionHtml}</div></div>`}</div><form id="aiComposer" class="ai-composer" data-csrf="${csrf(req)}" data-conversation="${conversation?.id||''}" data-mode="${mode}" data-task="${esc(task)}" data-developer="${developer?'1':'0'}"><textarea id="aiPrompt" rows="3" maxlength="12000" placeholder="${mode==='write'?'مثلاً: یک متن معرفی کوتاه برای محصولم بنویس…':mode==='translate'?'متنی که می‌خوای ترجمه بشه را اینجا بنویس…':mode==='summarize'?'متن طولانی را اینجا قرار بده…':'پیامت را بنویس…'}" required></textarea><div class="composer-actions"><div id="aiMeta" class="ai-meta">هزینه بعد از پاسخ نمایش داده می‌شود.</div><button id="aiSend" class="btn primary" type="submit">ارسال</button></div></form></section></div></div><script defer src="/static/workspace-ai.js?v=${esc(ASSET_VERSION)}"></script>`))
 });
 
 app.post('/dashboard/ai/chat',guard,checkCsrf,async(req,res)=>{
  try{
   const prompt=String(req.body.prompt||'').trim();if(!prompt)return res.status(400).json({ok:false,error:'پیام خالی است.'});if(prompt.length>12000)return res.status(400).json({ok:false,error:'متن درخواست بیش از حد طولانی است.'});
-  const ws=req.user.workspace||'simple';const mode=['chat','write','translate','summarize','creative'].includes(req.body.mode)?req.body.mode:'chat';
+  const ws=req.user.workspace||'simple';const mode=['chat','write','translate','summarize','creative'].includes(req.body.mode)?req.body.mode:'chat';const task=String(req.body.task||'').slice(0,40);
   let conv=null;
   if(req.body.conversation_id){const cq=await pool.query('select * from ai_conversations where id=$1 and user_id=$2',[String(req.body.conversation_id),req.user.id]);conv=cq.rows[0]||null}
   if(!conv){conv={id:crypto.randomUUID(),user_id:req.user.id,workspace:ws,title:prompt.replace(/\s+/g,' ').slice(0,58)+(prompt.length>58?'…':''),model_slug:null};await pool.query('insert into ai_conversations(id,user_id,workspace,title) values($1,$2,$3,$4)',[conv.id,req.user.id,ws,conv.title])}
@@ -246,7 +263,7 @@ app.post('/dashboard/ai/chat',guard,checkCsrf,async(req,res)=>{
   const chronological=history.rows.reverse();
   const developer=ws==='api'||ws==='production';
   const requestedModel=developer&&req.body.model?String(req.body.model):'auto';
-  const chatMessages=[{role:'system',content:modeInstruction(mode)},...chronological,{role:'user',content:prompt}];
+  const chatMessages=[{role:'system',content:[modeInstruction(mode),taskInstruction(task)].filter(Boolean).join(' ')},...chronological,{role:'user',content:prompt}];
   const result=await runPaidChat({userId:req.user.id,modelSlug:requestedModel,messages:chatMessages});
   await pool.query('begin');
   try{
@@ -258,6 +275,66 @@ app.post('/dashboard/ai/chat',guard,checkCsrf,async(req,res)=>{
   const b=await pool.query('select wallet_balance_toman from users where id=$1',[req.user.id]);req.user.wallet_balance_toman=b.rows[0].wallet_balance_toman;
   res.json({ok:true,conversation_id:conv.id,answer:result.text,model:result.model.slug,input_tokens:result.input,output_tokens:result.output,charged_toman:result.charge,latency_ms:result.latencyMs,request_id:result.requestId,wallet_balance_toman:Number(b.rows[0].wallet_balance_toman)});
  }catch(e){console.error(e);res.status(e.status||500).json({ok:false,error:e.message||'خطایی در اجرای مدل رخ داد.'})}
+});
+
+
+app.get('/dashboard/automation',guard,async(req,res)=>{
+ const [projects,total]=await Promise.all([
+  pool.query(`select p.*,count(k.id) keys,coalesce(sum(k.total_spent_toman),0) spend
+    from automation_projects p left join api_keys k on k.project_id=p.id
+    where p.user_id=$1 group by p.id order by p.created_at desc`,[req.user.id]),
+  pool.query(`select count(distinct p.id) projects,coalesce(sum(k.total_spent_toman),0) spend
+    from automation_projects p left join api_keys k on k.project_id=p.id where p.user_id=$1`,[req.user.id])
+ ]);
+ const raw=req.session.projectKey;delete req.session.projectKey;
+ const cards=projects.rows.map(p=>`<article class="project-card"><div class="project-head"><div><span class="pill">مشتری / پروژه</span><h3>${esc(p.name)}</h3><small>${esc(p.client_name||'بدون نام مشتری')}</small></div><b>${toman(p.spend)}</b></div><div class="project-metrics"><span>کلید فعال: <b>${Number(p.keys).toLocaleString('fa-IR')}</b></span><span>بودجه: <b>${p.budget_toman?toman(p.budget_toman):'نامحدود'}</b></span></div><form method="post" action="/dashboard/automation/${p.id}/key"><input type="hidden" name="_csrf" value="${csrf(req)}"><button class="btn ghost wide">ساخت API Key برای این پروژه</button></form></article>`).join('');
+ res.send(appShell(req,'پروژه‌ها و مشتری‌ها',`<div class="dash workspace-product"><div class="product-hero"><div><span class="badge">Automation Workspace</span><h1>پروژه و مشتری را از مصرف جدا کن.</h1><p>برای هر مشتری یک Project و API Key جدا بساز تا هزینه‌اش مستقل دیده شود.</p></div><div class="hero-kpis"><div><span>پروژه</span><b>${Number(total.rows[0].projects||0).toLocaleString('fa-IR')}</b></div><div><span>مصرف پروژه‌ها</span><b>${toman(total.rows[0].spend)}</b></div></div></div>${raw?`<div class="secretbox"><b>کلید پروژه فقط همین یک‌بار نمایش داده می‌شود:</b><code>${esc(raw)}</code></div>`:''}<div class="product-grid"><section><div class="section-title"><div><h2>پروژه‌ها</h2><p class="sub">کلید و هزینه هر مشتری جداست.</p></div></div><div class="project-grid">${cards||'<div class="empty-product"><b>هنوز پروژه‌ای نداری.</b><span>اولین مشتری یا اتوماسیونت را بساز.</span></div>'}</div></section><aside class="tool-panel"><h3>پروژه جدید</h3><form class="stack" method="post" action="/dashboard/automation"><input type="hidden" name="_csrf" value="${csrf(req)}"><input name="name" maxlength="80" placeholder="نام پروژه؛ مثلاً ربات پشتیبانی" required><input name="client_name" maxlength="80" placeholder="نام مشتری (اختیاری)"><input name="budget_toman" inputmode="numeric" placeholder="سقف بودجه پروژه به تومان (اختیاری)"><button class="btn primary">ساخت پروژه</button></form><div class="tool-note"><b>قدم بعدی</b><p>بعد از ساخت Key، همان کلید را در n8n، Telegram Bot یا اپ مشتری استفاده کن.</p></div></aside></div></div>`))
+});
+app.post('/dashboard/automation',guard,checkCsrf,async(req,res)=>{
+ const name=String(req.body.name||'').trim().slice(0,80);if(!name)return res.redirect('/dashboard/automation');
+ const budget=Number(String(req.body.budget_toman||'').replace(/[^0-9.]/g,''))||null;
+ await pool.query('insert into automation_projects(id,user_id,name,client_name,budget_toman) values($1,$2,$3,$4,$5)',[crypto.randomUUID(),req.user.id,name,String(req.body.client_name||'').trim().slice(0,80)||null,budget]);
+ res.redirect('/dashboard/automation')
+});
+app.post('/dashboard/automation/:id/key',guard,checkCsrf,async(req,res)=>{
+ const pq=await pool.query('select * from automation_projects where id=$1 and user_id=$2',[req.params.id,req.user.id]);const p=pq.rows[0];if(!p)return res.status(404).send('Not found');
+ const key=buildApiKey();await pool.query('insert into api_keys(id,user_id,project_id,name,prefix,key_hash,spend_limit_toman) values($1,$2,$3,$4,$5,$6,$7)',[crypto.randomUUID(),req.user.id,p.id,`پروژه: ${p.name}`,key.prefix,key.hash,p.budget_toman||null]);req.session.projectKey=key.raw;res.redirect('/dashboard/automation')
+});
+
+app.get('/dashboard/production',guard,async(req,res)=>{
+ const [all,day,month,models]=await Promise.all([
+  pool.query("select count(*) requests,count(*) filter(where status='failed') failed,coalesce(avg(latency_ms) filter(where status='success'),0) latency from usage_records where user_id=$1 and created_at>=now()-interval '30 days'",[req.user.id]),
+  pool.query("select count(*) requests,count(*) filter(where status='failed') failed,coalesce(avg(latency_ms) filter(where status='success'),0) latency from usage_records where user_id=$1 and created_at>=now()-interval '24 hours'",[req.user.id]),
+  pool.query("select coalesce(sum(charged_toman) filter(where status='success'),0) spend from usage_records where user_id=$1 and created_at>=date_trunc('month',now())",[req.user.id]),
+  pool.query("select count(*) filter(where active=true and modality='text') active,count(*) filter(where active=true and modality='text' and provider_id is not null) routable from models")
+ ]);
+ const m=all.rows[0],d=day.rows[0],budget=Number(req.user.monthly_budget_toman||0),spent=Number(month.rows[0].spend||0),errorRate=Number(m.requests)?Number(m.failed)/Number(m.requests)*100:0;
+ const active=Number(models.rows[0].active||0),fallback=active>1;
+ res.send(appShell(req,'سلامت Production',`<div class="dash workspace-product"><div class="product-hero"><div><span class="badge">Production Workspace</span><h1>سلامت سرویس قبل از Playground.</h1><p>این اعداد مستقیم از Requestهای ثبت‌شده حساب می‌آیند.</p></div><a class="btn ghost" href="/dashboard/usage">Request Logs</a></div><div class="health-grid"><div class="health-card"><span>Request · ۳۰ روز</span><b>${Number(m.requests||0).toLocaleString('fa-IR')}</b></div><div class="health-card"><span>Error rate</span><b class="${errorRate>5?'metricbad':'metricgood'}">${errorRate.toLocaleString('fa-IR',{maximumFractionDigits:1})}٪</b></div><div class="health-card"><span>Avg latency</span><b>${Math.round(Number(m.latency||0)).toLocaleString('fa-IR')} ms</b></div><div class="health-card"><span>۲۴ ساعت اخیر</span><b>${Number(d.requests||0).toLocaleString('fa-IR')} درخواست</b><small>${Number(d.failed||0).toLocaleString('fa-IR')} خطا</small></div></div><div class="product-grid mt"><section class="card"><div class="section-title"><div><h2>بودجه ماهانه</h2><p class="sub">وقتی سقف رد شود درخواست جدید قبل از کسر Wallet متوقف می‌شود.</p></div></div><div class="budget-line"><div><span>مصرف این ماه</span><b>${toman(spent)}</b></div><div><span>سقف</span><b>${budget?toman(budget):'تنظیم نشده'}</b></div></div><div class="progress-outer"><div class="progress-inner" style="width:${budget?Math.min(100,spent/budget*100):0}%"></div></div><form class="inline mt" method="post" action="/dashboard/production/budget"><input type="hidden" name="_csrf" value="${csrf(req)}"><input name="budget_toman" inputmode="numeric" placeholder="مثلاً ۵۰۰۰۰۰۰" value="${budget||''}"><button class="btn primary">ذخیره سقف</button></form></section><aside class="card"><h3>Routing readiness</h3><div class="status-row"><span>مدل متنی فعال</span><b>${active.toLocaleString('fa-IR')}</b></div><div class="status-row"><span>Fallback چندمدلی</span><b class="${fallback?'metricgood':''}">${fallback?'آماده':'هنوز آماده نیست'}</b></div><p class="sub">Fallback فقط وقتی معنی‌دار است که بیش از یک مدل/route فعال و تست‌شده داشته باشیم.</p></aside></div></div>`))
+});
+app.post('/dashboard/production/budget',guard,checkCsrf,async(req,res)=>{const v=Number(String(req.body.budget_toman||'').replace(/[^0-9.]/g,''))||null;await pool.query('update users set monthly_budget_toman=$1,updated_at=now() where id=$2',[v,req.user.id]);req.user.monthly_budget_toman=v;res.redirect('/dashboard/production')});
+
+app.get('/dashboard/business',guard,(req,res)=>{
+ const tools=[
+  ['product','توضیحات محصول','نام و ویژگی‌های محصول را بده؛ خروجی فروشگاهی تمیز بگیر.','write'],
+  ['social','محتوای شبکه اجتماعی','موضوع، لحن و هدف را بده؛ متن قابل انتشار بگیر.','write'],
+  ['seo','محتوای SEO','موضوع و کلیدواژه را بده؛ ساختار مقاله و متن طبیعی بگیر.','write'],
+  ['executive','خلاصه مدیریتی','متن را بده؛ نکات، ریسک‌ها و اقدام بعدی را بگیر.','summarize'],
+  ['translate','ترجمه حرفه‌ای','متن و زبان مقصد را بده؛ ترجمه روان بگیر.','translate']
+ ];
+ const html=tools.map(([task,title,desc,mode])=>`<a class="business-tool" href="/dashboard/ai?mode=${mode}&task=${task}"><span class="tool-icon">✦</span><div><b>${title}</b><p>${desc}</p></div><span class="tool-go">شروع</span></a>`).join('');
+ res.send(appShell(req,'ابزارهای کسب‌وکار',`<div class="dash workspace-product"><div class="product-hero"><div><span class="badge">Business Workspace</span><h1>چه کاری باید انجام شود؟</h1><p>اینجا مدل و Token نقطه شروع نیست؛ کار تجاری نقطه شروع است.</p></div><div class="wallet-chip">موجودی <b>${toman(req.user.wallet_balance_toman)}</b></div></div><div class="business-tools">${html}</div><div class="roadmap-note"><b>Bulk و فایل</b><span>عمداً هنوز فعال نیستند؛ وقتی Batch/File pipeline واقعی وصل شود به همین Workspace اضافه می‌شوند.</span></div></div>`))
+});
+
+app.get('/dashboard/creative',guard,(req,res)=>{
+ const tools=[
+  ['image_prompt','Prompt تصویر','Prompt دقیق برای مدل‌های تصویر؛ سبک، نور، کادر و محدودیت‌ها.','creative'],
+  ['video_prompt','Prompt ویدئو','Shot، حرکت دوربین، subject و timing را ساختاریافته کن.','creative'],
+  ['storyboard','Storyboard','سناریو را به صحنه‌های قابل تولید تقسیم کن.','creative'],
+  ['concept','Concept Lab','چند مسیر خلاق متفاوت برای کمپین یا محتوا بگیر.','creative']
+ ];
+ const html=tools.map(([task,title,desc,mode])=>`<a class="creative-tool" href="/dashboard/ai?mode=${mode}&task=${task}"><div class="creative-icon">✦</div><b>${title}</b><p>${desc}</p></a>`).join('');
+ res.send(appShell(req,'Creative Studio',`<div class="dash workspace-product"><div class="product-hero"><div><span class="badge">Creative Workspace</span><h1>Creative Studio، فعلاً برای فکر و Prompt.</h1><p>Prompt Lab و Storyboard فعال‌اند. تولید مستقیم تصویر و ویدئو را تا اتصال Provider واقعی نشان نمی‌دهیم.</p></div><div class="capability-state"><span>Prompt Studio <b class="metricgood">فعال</b></span><span>Image / Video Generation <b>در انتظار Provider</b></span></div></div><div class="creative-tools">${html}</div></div>`))
 });
 
 app.get('/dashboard/models',guard,async(req,res)=>{const {rows}=await pool.query('select m.*,p.name provider_name from models m join providers p on p.id=m.provider_id order by m.display_name');res.send(appShell(req,'مدل‌ها',`<div class="dash"><h1>مدل‌ها</h1><p class="sub">شناسه پایدار Bavaan و upstream پشت آن.</p><div class="card"><table class="table"><tr><th>مدل</th><th>شناسه API</th><th>Provider</th><th>وضعیت</th></tr>${rows.map(m=>`<tr><td><b>${esc(m.display_name)}</b></td><td dir="ltr">${esc(m.slug)}</td><td>${esc(m.provider_name)}</td><td><span class="pill">${m.active?'فعال':'غیرفعال'}</span></td></tr>`).join('')}</table></div></div>`))});
