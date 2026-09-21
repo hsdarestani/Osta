@@ -40,9 +40,18 @@ jobs:
             ENV
             docker compose build --pull
             docker compose up -d --remove-orphans
+            for i in $(seq 1 30); do
+              if curl -fsS http://127.0.0.1:3088/healthz >/dev/null; then break; fi
+              sleep 2
+            done
+            curl -fsS http://127.0.0.1:3088/healthz
             if ! command -v nginx >/dev/null 2>&1; then apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y nginx; fi
             cp nginx-ai.bavaan.ir.conf /etc/nginx/sites-available/ai.bavaan.ir
             ln -sf /etc/nginx/sites-available/ai.bavaan.ir /etc/nginx/sites-enabled/ai.bavaan.ir
             nginx -t && systemctl reload nginx
-            if command -v certbot >/dev/null 2>&1; then certbot --nginx -d ai.bavaan.ir --non-interactive --agree-tos --register-unsafely-without-email --redirect || true; fi
+            if ! command -v certbot >/dev/null 2>&1; then
+              apt-get update
+              DEBIAN_FRONTEND=noninteractive apt-get install -y certbot python3-certbot-nginx
+            fi
+            certbot --nginx -d ai.bavaan.ir --non-interactive --agree-tos --register-unsafely-without-email --redirect || true
             docker image prune -f
