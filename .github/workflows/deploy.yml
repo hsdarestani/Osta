@@ -1,0 +1,48 @@
+name: Deploy Bavaan AI
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: root
+          password: ${{ secrets.PASS }}
+          script_stop: true
+          script: |
+            set -e
+            if ! command -v git >/dev/null 2>&1; then apt-get update && apt-get install -y git; fi
+            if ! command -v docker >/dev/null 2>&1; then curl -fsSL https://get.docker.com | sh; fi
+            mkdir -p /opt/bavaan-ai
+            if [ ! -d /opt/bavaan-ai/.git ]; then git clone https://github.com/hsdarestani/Osta.git /opt/bavaan-ai; else cd /opt/bavaan-ai && git fetch origin && git reset --hard origin/main; fi
+            cd /opt/bavaan-ai
+            touch .runtime
+            grep -q '^SESSION_SECRET=' .runtime || echo "SESSION_SECRET=$(openssl rand -hex 32)" >> .runtime
+            grep -q '^POSTGRES_PASSWORD=' .runtime || echo "POSTGRES_PASSWORD=$(openssl rand -hex 24)" >> .runtime
+            . ./.runtime
+            cat > .env <<ENV
+            POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+            DATABASE_URL=postgresql://bavaan:$POSTGRES_PASSWORD@db:5432/bavaan
+            SESSION_SECRET=$SESSION_SECRET
+            APP_URL=https://ai.bavaan.ir
+            ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
+            FREE_CREDIT_TOMAN=50000
+            USD_TO_TOMAN=100000
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            CLOUDFLARE_ACCOUNT_ID=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+            CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}
+            CLOUDFLARE_GATEWAY_ID=${{ secrets.CLOUDFLARE_GATEWAY_ID }}
+            ENV
+            docker compose build --pull
+            docker compose up -d --remove-orphans
+            if ! command -v nginx >/dev/null 2>&1; then apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y nginx; fi
+            cp nginx-ai.bavaan.ir.conf /etc/nginx/sites-available/ai.bavaan.ir
+            ln -sf /etc/nginx/sites-available/ai.bavaan.ir /etc/nginx/sites-enabled/ai.bavaan.ir
+            nginx -t && systemctl reload nginx
+            if command -v certbot >/dev/null 2>&1; then certbot --nginx -d ai.bavaan.ir --non-interactive --agree-tos --register-unsafely-without-email --redirect || true; fi
+            docker image prune -f
