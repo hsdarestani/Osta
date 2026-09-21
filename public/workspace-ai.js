@@ -8,6 +8,7 @@
   const model = document.getElementById('aiModel');
   const snippet = document.getElementById('apiSnippet');
   const fa = new Intl.NumberFormat('fa-IR');
+  const task = form.dataset.task || '';
 
   function addMessage(role, text, cost) {
     const empty = messages.querySelector('.chat-empty');
@@ -44,6 +45,13 @@
     send.textContent = busy ? 'در حال پردازش…' : 'ارسال';
   }
 
+  document.querySelectorAll('.prompt-suggestion').forEach((button) => {
+    button.addEventListener('click', () => {
+      prompt.value = button.dataset.prompt || '';
+      prompt.focus();
+    });
+  });
+
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const text = prompt.value.trim();
@@ -62,6 +70,7 @@
           _csrf: form.dataset.csrf,
           conversation_id: form.dataset.conversation || null,
           mode: form.dataset.mode || 'chat',
+          task,
           model: model ? model.value : null,
           prompt: text
         })
