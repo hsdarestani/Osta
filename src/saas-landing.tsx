@@ -26,7 +26,7 @@ function IconWrap({ children }: { children: ReactNode }) {
 
 function PulseButton({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <a href={href} className="pulse-button inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 font-bold text-primary-foreground transition duration-200 hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring">
+    <a href={href} className="pulse-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 font-bold text-primary-foreground transition duration-200 hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring sm:w-auto">
       {children}
       <ArrowRight aria-hidden="true" className="size-4 rtl:-scale-x-100" />
     </a>
@@ -45,7 +45,7 @@ function BorderBeamTerminal() {
           </div>
           <span className="text-xs text-muted-foreground">Bavaan API</span>
         </div>
-        <div dir="ltr" className="space-y-3 font-mono text-xs leading-7 sm:text-sm">
+        <div dir="ltr" className="min-w-0 space-y-3 overflow-hidden font-mono text-[11px] leading-6 sm:text-sm sm:leading-7 [&_p]:break-all">
           <p className="text-muted-foreground">$ curl https://ai.bavaan.ir/api/v1/chat/completions</p>
           <p><span className="text-muted-foreground">Authorization:</span> Bearer bv_••••••••</p>
           <p><span className="text-muted-foreground">model:</span> "gemini"</p>
@@ -114,7 +114,7 @@ function CustomerMarquee() {
 
 function Bento() {
   return (
-    <section id="features" className="mx-auto max-w-7xl px-4 py-24 sm:px-6">
+    <section id="features" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:py-24">
       <div className="mb-10 max-w-3xl">
         <span className="mb-3 inline-flex rounded-full border border-border bg-secondary px-3 py-1 text-xs text-muted-foreground">همه‌چیز زیر یک حساب</span>
         <h2 className="text-3xl font-black leading-tight sm:text-5xl">فروش توکن، بدون اینکه تجربه کاربر شبیه یک پنل خام API باشد.</h2>
@@ -132,7 +132,7 @@ function Bento() {
               ["مصرف ورودی", "۱۲٬۴۸۰ توکن"],
               ["مصرف خروجی", "۲٬۱۶۰ توکن"],
               ["هزینه نهایی", "۳٬۸۴۰ تومان"]
-            ].map(([a,b]) => <div key={a} className="flex items-center justify-between border-b border-border px-4 py-3 text-sm last:border-b-0"><span className="text-muted-foreground">{a}</span><strong>{b}</strong></div>)}
+            ].map(([a,b]) => <div key={a} className="flex flex-col gap-1 border-b border-border px-4 py-3 text-sm last:border-b-0 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between"><span className="text-muted-foreground">{a}</span><strong>{b}</strong></div>)}
           </div>
         </SpotlightCard>
 
@@ -176,7 +176,7 @@ function Bento() {
 
 function Integrations() {
   return (
-    <section id="integrations" className="section-glow border-y border-border py-24">
+    <section id="integrations" className="section-glow border-y border-border py-14 sm:py-20 lg:py-24">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
         <div>
           <span className="inline-flex rounded-full border border-border bg-secondary px-3 py-1 text-xs text-muted-foreground">Provider Router</span>
@@ -235,7 +235,7 @@ function Pricing() {
     {name:"مصرف بالا", price:"تخفیف حجمی", desc:"همان PAYG، با قیمت بهتر برای مصرف بیشتر.", points:["بدون قفل پلن", "گزارش مالی", "مناسب تیم و محصول"]}
   ];
   return (
-    <section id="pricing" className="border-y border-border bg-card/35 py-24">
+    <section id="pricing" className="border-y border-border bg-card/35 py-14 sm:py-20 lg:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="mx-auto mb-12 max-w-3xl text-center">
           <h2 className="text-3xl font-black sm:text-5xl">قیمت‌گذاری‌ای که <span className="highlight-text">نیاز به توضیح ندارد.</span></h2>
@@ -260,7 +260,7 @@ function Pricing() {
 function FinalCta() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6">
-      <div className="grid-background relative overflow-hidden rounded-[2rem] border border-border bg-card p-7 text-center sm:p-14">
+      <div className="grid-background relative overflow-hidden rounded-3xl border border-border bg-card p-6 text-center sm:rounded-[2rem] sm:p-12 lg:p-14">
         <div className="absolute inset-0 bg-background/55" />
         <div className="relative mx-auto max-w-3xl">
           <div className="mx-auto mb-5 grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground"><Zap aria-hidden="true" className="size-6" /></div>
@@ -287,9 +287,9 @@ function SaasLanding() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="glass-header sticky top-0 z-50 border-b border-border">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
           <a href="/" className="flex items-center gap-2 rounded-xl focus-visible:ring-2 focus-visible:ring-ring" aria-label="صفحه اصلی Bavaan AI">
-            <span className="grid size-9 place-items-center rounded-2xl bg-primary font-black text-primary-foreground">B</span><strong>Bavaan AI</strong>
+            <span className="grid size-9 shrink-0 place-items-center rounded-2xl bg-primary font-black text-primary-foreground">B</span><strong className="text-sm sm:text-base">Bavaan AI</strong>
           </a>
           <nav aria-label="منوی اصلی" className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
             <a className="transition duration-200 hover:text-foreground" href="#features">امکانات</a>
@@ -299,25 +299,25 @@ function SaasLanding() {
           </nav>
           <div className="flex items-center gap-2">
             {!boot.authenticated && <a href="/login" className="hidden rounded-xl px-3 py-2 text-sm text-muted-foreground transition duration-200 hover:text-foreground sm:inline-flex">ورود</a>}
-            <a href={boot.authenticated ? "/dashboard" : "/register"} className="inline-flex min-h-10 items-center rounded-xl border border-border bg-secondary px-4 text-sm font-bold transition duration-200 hover:bg-muted">{boot.authenticated ? "داشبورد" : "ساخت حساب"}</a>
+            <a href={boot.authenticated ? "/dashboard" : "/register"} className="inline-flex min-h-10 shrink-0 items-center rounded-xl border border-border bg-secondary px-3 text-xs font-bold transition duration-200 hover:bg-muted sm:px-4 sm:text-sm">{boot.authenticated ? "داشبورد" : "ساخت حساب"}</a>
           </div>
         </div>
       </header>
 
       <main>
         <section className="hero-shell overflow-hidden">
-          <div className="mx-auto grid max-w-7xl gap-12 px-4 pb-20 pt-16 sm:px-6 sm:pt-24 lg:grid-cols-2 lg:items-center lg:pb-28">
+          <div className="mx-auto grid max-w-7xl gap-9 px-4 pb-14 pt-10 sm:gap-12 sm:px-6 sm:pb-20 sm:pt-20 lg:grid-cols-2 lg:items-center lg:pb-28 lg:pt-24">
             <div>
               <div className="mb-5 flex flex-wrap gap-2">
                 {uses.slice(0,3).map((u,i)=><span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground">{u.icon}{u.text}</span>)}
               </div>
-              <h1 className="text-reveal max-w-3xl text-4xl font-black leading-[1.22] sm:text-6xl">
+              <h1 className="text-reveal max-w-3xl text-[2.15rem] font-black leading-[1.35] sm:text-5xl sm:leading-[1.25] lg:text-6xl">
                 یک پلتفرم AI که خودش را با <span className="gradient-text">نوع استفاده تو</span> هماهنگ می‌کند.
               </h1>
               <p className="mt-6 max-w-xl text-base leading-8 text-muted-foreground sm:text-lg">همه مدل‌های اصلی، یک کیف پول ریالی و یک API. اگر فنی باشی کنترل کامل داری؛ اگر نباشی، اصلاً لازم نیست اسم مدل‌ها را بدانی.</p>
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-7 grid grid-cols-1 gap-3 sm:mt-8 sm:flex sm:flex-wrap">
                 <PulseButton href={boot.authenticated ? "/dashboard" : "/register"}>{boot.authenticated ? "باز کردن داشبورد" : "شروع با " + fa.format(freeCredit) + " تومان هدیه"}</PulseButton>
-                <a href="/docs" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-5 py-3 font-bold transition duration-200 hover:bg-secondary"><Terminal aria-hidden="true" className="size-4" />دیدن مستندات</a>
+                <a href="/docs" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-5 py-3 font-bold transition duration-200 hover:bg-secondary sm:w-auto"><Terminal aria-hidden="true" className="size-4" />دیدن مستندات</a>
               </div>
               <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted-foreground">
                 <span className="flex items-center gap-2"><CheckCircle2 aria-hidden="true" className="size-4 text-primary" />بدون اشتراک ماهانه</span>
