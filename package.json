@@ -1,5 +1,28 @@
 {
-  "name":"bavaan-ai","version":"0.1.0","private":true,"type":"commonjs",
-  "scripts":{"start":"node server.js","check":"node --check server.js"},
-  "dependencies":{"bcryptjs":"^2.4.3","connect-pg-simple":"^10.0.0","express":"^4.21.2","express-session":"^1.18.1","helmet":"^8.0.0","passport":"^0.7.0","passport-google-oauth20":"^2.0.0","pg":"^8.13.1"}
+  "name": "bavaan-ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js",
+    "build:landing": "mkdir -p public/landing && esbuild src/saas-landing.tsx --bundle --minify --outfile=public/landing/app.js --format=iife --jsx=automatic && tailwindcss -c tailwind.config.js -i ./src/landing.css -o ./public/landing/app.css --minify"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-pg-simple": "^10.0.0",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "lucide-react": "^0.468.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "pg": "^8.13.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.2",
+    "tailwindcss": "^3.4.17"
+  }
 }
