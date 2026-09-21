@@ -442,3 +442,148 @@ button,input,select,textarea{max-width:100%}
   .chat-messages{min-height:180px}
   .ai-composer{position:static}
 }
+
+/* Responsive v3 — layout quality, not just shrink-to-fit */
+@media(min-width:1440px){
+  .dash{padding:32px 36px}
+  .workspace-product{max-width:1380px}
+  .ai-layout{grid-template-columns:260px minmax(0,1fr)}
+  .chat-messages{padding-inline:32px}
+}
+@media(min-width:961px) and (max-width:1279px){
+  .app{grid-template-columns:210px minmax(0,1fr)}
+  .app aside{padding:20px 12px}
+  .sidegroup a{padding:8px 9px;font-size:13px}
+  .workspace-context{padding:10px 11px}
+  .topbar{padding-inline:20px}
+  .dash{padding:22px}
+  .workspacehero,.admin-grid{grid-template-columns:minmax(0,1fr)}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .product-hero{gap:18px;padding:22px}
+  .creative-tools{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ai-layout{grid-template-columns:220px minmax(0,1fr)}
+}
+@media(max-width:960px){
+  body{overscroll-behavior-x:none}
+  .app main{width:100%}
+  .topbar{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  .mobile-workspace-nav{box-shadow:0 1px 0 var(--line)}
+  .mobile-workspace-nav a{min-width:88px}
+  .dash,.workspace-product{max-width:none}
+  .product-grid,.workspacehero,.admin-grid{gap:10px}
+  .tool-panel{order:2}
+  .card{max-width:100%}
+}
+@media(max-width:720px){
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .health-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hero-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .project-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .barline{align-items:flex-start;flex-direction:column;gap:2px}
+  .barline b{max-width:100%;overflow-wrap:anywhere}
+  .dashhead{display:grid;grid-template-columns:1fr}
+  .secretbox{font-size:12px}
+}
+@media(max-width:520px){
+  .topbar{position:sticky;top:0}
+  .mobile-workspace-nav{
+    position:sticky;
+    top:56px;
+    gap:4px;
+    padding:6px 8px;
+    overflow-x:auto;
+    justify-content:flex-start;
+    scrollbar-width:none
+  }
+  .mobile-workspace-nav::-webkit-scrollbar{display:none}
+  .mobile-workspace-nav a{
+    flex:0 0 auto;
+    min-width:auto;
+    padding:8px 11px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:#0e1117;
+    font-size:11px
+  }
+  .mobile-workspace-nav a:hover,.mobile-workspace-nav a:focus-visible{
+    border-color:#8cffb555;
+    border-bottom-color:#8cffb555;
+    background:#11161d
+  }
+  .dash{padding:10px}
+  .stats{gap:7px}
+  .stat{min-height:84px;display:flex;flex-direction:column;justify-content:space-between}
+  .stat b{line-height:1.35}
+  .product-hero{padding:14px}
+  .product-hero h1{font-size:21px}
+  .hero-kpis{grid-template-columns:1fr 1fr}
+  .hero-kpis>div{min-width:0}
+  .project-metrics{grid-template-columns:1fr}
+  .business-tool,.creative-tool,.project-card,.health-card{border-radius:15px}
+  .business-tool p,.creative-tool p{line-height:1.7}
+  .ai-page{padding:6px}
+  .ai-layout{gap:6px}
+  .conversation-panel{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    overflow:hidden;
+    padding:7px
+  }
+  .conversation-panel>.btn{
+    flex:0 0 auto;
+    width:auto;
+    min-height:38px;
+    padding-inline:12px
+  }
+  .conversation-list{
+    flex:1 1 auto;
+    margin:0;
+    min-width:0
+  }
+  .conversation-link{flex-basis:150px}
+  .ai-studio{
+    min-height:calc(100dvh - 154px);
+    border-radius:13px
+  }
+  .ai-studio-head{padding:12px}
+  .ai-studio-head h1{font-size:20px}
+  .chat-messages{
+    min-height:210px;
+    padding:10px 8px;
+    scroll-padding-bottom:100px
+  }
+  .chatmsg{max-width:96%}
+  .chatbubble{font-size:14px}
+  .ai-composer{
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+    border-radius:0
+  }
+  .ai-composer textarea{min-height:68px;max-height:136px}
+  .composer-actions{gap:6px}
+  .ai-meta{font-size:10px}
+  .tool-context{padding:8px 10px}
+  .table{min-width:560px}
+}
+@media(max-width:380px){
+  .topbar{padding-inline:9px}
+  .mobile-context span{max-width:52vw;font-size:12px}
+  .mobile-workspace-nav{top:56px}
+  .stats,.health-grid,.hero-kpis{grid-template-columns:1fr}
+  .stat{min-height:auto}
+  .dash h1{font-size:22px}
+  .product-hero h1{font-size:20px}
+  .conversation-panel{display:none}
+  .ai-studio{min-height:calc(100dvh - 112px)}
+  .chat-empty{padding-inline:4px}
+  .prompt-suggestion{font-size:11.5px}
+  .business-tool,.creative-tool{padding:14px}
+}
+@media(min-width:641px) and (max-width:960px){
+  .dash{padding:18px}
+  .product-hero{padding:20px}
+  .health-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .creative-tools{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .conversation-panel{display:block}
+  .ai-studio-head{grid-template-columns:minmax(0,1fr) auto}
+}
