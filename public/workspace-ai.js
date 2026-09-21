@@ -9,6 +9,7 @@
   const snippet = document.getElementById('apiSnippet');
   const fa = new Intl.NumberFormat('fa-IR');
   const task = form.dataset.task || '';
+  const developerMode = form.dataset.developer === '1';
 
   function addMessage(role, text, cost) {
     const empty = messages.querySelector('.chat-empty');
@@ -85,12 +86,19 @@
         url.searchParams.set('c', data.conversation_id);
         history.replaceState({}, '', url);
       }
-      meta.textContent =
-        'مدل: ' + data.model +
-        ' · ورودی: ' + fa.format(data.input_tokens) +
-        ' · خروجی: ' + fa.format(data.output_tokens) +
-        ' · هزینه: ' + fa.format(data.charged_toman) + ' تومان' +
-        ' · زمان: ' + fa.format(data.latency_ms) + ' ms';
+      if (developerMode) {
+        meta.textContent =
+          'مدل: ' + data.model +
+          ' · ورودی: ' + fa.format(data.input_tokens) +
+          ' · خروجی: ' + fa.format(data.output_tokens) +
+          ' · هزینه: ' + fa.format(data.charged_toman) + ' تومان' +
+          ' · زمان: ' + fa.format(data.latency_ms) + ' ms' +
+          (data.request_id ? ' · Request ID: ' + data.request_id : '');
+      } else {
+        meta.textContent =
+          'هزینه این درخواست: ' + fa.format(data.charged_toman) + ' تومان' +
+          ' · موجودی: ' + fa.format(data.wallet_balance_toman) + ' تومان';
+      }
     } catch (error) {
       addMessage('assistant', 'خطا: ' + (error?.message || 'دوباره تلاش کن.'));
       meta.textContent = 'درخواست انجام نشد و بابت پاسخ ناموفق هزینه‌ای ثبت نشد.';
