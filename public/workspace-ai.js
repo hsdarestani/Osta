@@ -6,6 +6,7 @@
   const messages = document.getElementById('chatMessages');
   const meta = document.getElementById('aiMeta');
   const model = document.getElementById('aiModel');
+  const snippet = document.getElementById('apiSnippet');
   const fa = new Intl.NumberFormat('fa-IR');
 
   function addMessage(role, text, cost) {
@@ -23,7 +24,17 @@
       wrap.appendChild(small);
     }
     messages.appendChild(wrap);
-    messages.scrollTop = messages.scrollHeight;
+    if (model && snippet) {
+    const refreshSnippet = () => {
+      const base = snippet.dataset.base || window.location.origin;
+      const chosen = model.value || snippet.dataset.model || 'gemini';
+      snippet.textContent = `curl ${base}/api/v1/chat/completions \\\n-H "Authorization: Bearer bv_YOUR_KEY" \\\n-H "Content-Type: application/json" \\\n-d '{"model":"${chosen}","messages":[{"role":"user","content":"سلام"}]}'`;
+    };
+    model.addEventListener('change', refreshSnippet);
+    refreshSnippet();
+  }
+
+  messages.scrollTop = messages.scrollHeight;
   }
 
   function setBusy(busy) {
