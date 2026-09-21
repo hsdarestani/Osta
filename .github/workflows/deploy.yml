@@ -2,6 +2,9 @@ name: Deploy Bavaan AI
 on:
   push:
     branches: [main]
+concurrency:
+  group: bavaan-production
+  cancel-in-progress: true
 jobs:
   deploy:
     runs-on: ubuntu-latest
