@@ -6,7 +6,7 @@ COPY server.js ./server.js
 COPY tailwind.config.js ./tailwind.config.js
 COPY src ./src
 COPY public ./public
-RUN npm run build:landing && npm prune --omit=dev
+RUN npm run check && npm run build:landing && npm prune --omit=dev
 ENV NODE_ENV=production PORT=3000
 EXPOSE 3000
 CMD ["node","server.js"]
