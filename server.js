@@ -24,7 +24,7 @@ const SEGMENTS={
  creator:{workspace:'creative',title:'بیشتر با تصویر، ویدئو و محتوای خلاق کار می‌کنم',desc:'فضای خلاق با تمرکز روی هزینه هر خروجی.'},
  everyday:{workspace:'simple',title:'فقط می‌خوام AI کارم رو انجام بده؛ اسم مدل مهم نیست',desc:'به جای انتخاب مدل، فقط کاری که می‌خوای انجام بدی رو انتخاب کن.'}
 };
-const WORKSPACES={api:'API و توسعه',automation:'اتوماسیون و مشتری',production:'Production',business:'کسب‌وکار',creative:'استودیو خلاق',simple:'ساده'};
+const WORKSPACES={api:'توسعه و API',automation:'اتوماسیون و مشتری',production:'محصول و Production',business:'کسب‌وکار',creative:'استودیوی خلاق',simple:'استفاده روزمره'};
 
 app.set('trust proxy',1);
 app.use(helmet({contentSecurityPolicy:false}));
@@ -48,7 +48,23 @@ function flash(req){const x=req.session.flash;delete req.session.flash;return x?
 function guard(req,res,next){if(!req.user)return res.redirect('/login');if(req.user.status==='suspended')return res.status(403).send('Account suspended');next()}
 function adminGuard(req,res,next){if(!req.user)return res.redirect('/login');if(req.user.role!=='admin')return res.redirect('/dashboard');next()}
 function workspaceCards(ws){const m={api:[['ساخت API Key','برای اپ، تست یا محیط production'],['Quickstart','Python، Node و cURL'],['مدل‌ها','قیمت، قابلیت و route']],automation:[['کلید پروژه','برای هر مشتری یک کلید'],['n8n','الگوهای اتصال سریع'],['Telegram','ربات با یک API']],production:[['هزینه زنده','Cost و Revenue'],['Budget','کنترل مصرف کلیدها'],['Reliability','آماده برای fallback']],business:[['تولید محتوا','محصول، SEO و شبکه اجتماعی'],['تحلیل فایل','اسناد و PDF'],['Bulk','کارهای حجمی']],creative:[['تصویر','Text to Image'],['ویدئو','مدل‌های Video'],['تاریخچه','هزینه هر خروجی']],simple:[['گفت‌وگو','سؤال و جواب'],['نوشتن','متن و بازنویسی'],['ساخت تصویر','بدون درگیری با اسم مدل']]};return (m[ws]||m.simple).map(x=>`<div class="quick"><b>${x[0]}</b><small>${x[1]}</small></div>`).join('')}
-function appShell(req,title,content){const u=req.user;const ws=u.workspace||'simple';const admin=u.role==='admin';const opts=Object.entries(WORKSPACES).map(([k,v])=>`<option value="${k}" ${ws===k?'selected':''}>${v}</option>`).join('');return base(title,`<div class="app"><aside><a href="/dashboard" class="brand"><span class="brandmark">B</span><b>Bavaan AI</b></a><div class="sidegroup"><span>فضای کار</span><a href="/dashboard">نمای کلی</a><a href="/dashboard/models">مدل‌ها</a><a href="/dashboard/api-keys">API Keys</a><a href="/dashboard/usage">مصرف و هزینه</a><a href="/dashboard/billing">کیف پول</a><a href="/dashboard/settings">تنظیمات</a></div>${admin?`<div class="sidegroup"><span>مدیریت</span><a href="/admin">داشبورد ادمین</a><a href="/admin/finance">مالی</a><a href="/admin/users">کاربران</a><a href="/admin/models">مدل‌ها و Providerها</a></div>`:''}</aside><main><div class="topbar"><form method="post" action="/workspace"><input type="hidden" name="_csrf" value="${csrf(req)}"><select class="workspace-select" name="workspace" onchange="this.form.submit()">${opts}</select></form><div class="topuser"><span>${esc(u.email)}</span><a href="/logout">خروج</a></div></div>${flash(req)}${content}</main></div>`,{user:u,wide:true})}
+function workspaceMenu(ws){
+ const menus={
+  api:[['/dashboard','نمای کلی'],['/dashboard/ai','Playground'],['/dashboard/api-keys','کلیدهای API'],['/dashboard/models','مدل‌ها'],['/dashboard/usage','مصرف و لاگ‌ها']],
+  automation:[['/dashboard','نمای کلی'],['/dashboard/ai','آزمایش AI'],['/dashboard/api-keys','کلیدهای پروژه'],['/dashboard/usage','مصرف پروژه‌ها']],
+  production:[['/dashboard','نمای کلی'],['/dashboard/ai','Playground'],['/dashboard/usage','پایش مصرف'],['/dashboard/models','مدل‌ها'],['/dashboard/api-keys','کلیدهای Production']],
+  business:[['/dashboard','خانه'],['/dashboard/ai?mode=write','تولید محتوا'],['/dashboard/ai?mode=summarize','خلاصه و تحلیل'],['/dashboard/ai?mode=translate','ترجمه'],['/dashboard/usage','مصرف من']],
+  creative:[['/dashboard','استودیو'],['/dashboard/ai?mode=creative','دستیار خلاق'],['/dashboard/usage','تاریخچه هزینه']],
+  simple:[['/dashboard','خانه'],['/dashboard/ai','گفت‌وگو با AI'],['/dashboard/ai?mode=write','نوشتن'],['/dashboard/ai?mode=translate','ترجمه'],['/dashboard/ai?mode=summarize','خلاصه‌سازی'],['/dashboard/usage','مصرف من']]
+ };
+ return menus[ws]||menus.simple;
+}
+function appShell(req,title,content){
+ const u=req.user;const ws=u.workspace||'simple';const admin=u.role==='admin';
+ const opts=Object.entries(WORKSPACES).map(([k,v])=>`<option value="${k}" ${ws===k?'selected':''}>${v}</option>`).join('');
+ const links=workspaceMenu(ws).map(([href,label])=>`<a href="${href}">${label}</a>`).join('');
+ return base(title,`<div class="app"><aside><a href="/dashboard" class="brand"><span class="brandmark">B</span><b>Bavaan AI</b></a><div class="workspace-name">${WORKSPACES[ws]}</div><div class="sidegroup"><span>فضای کار</span>${links}<a href="/dashboard/billing">کیف پول</a><a href="/dashboard/settings">تنظیمات</a></div>${admin?`<div class="sidegroup"><span>مدیریت</span><a href="/admin">داشبورد ادمین</a><a href="/admin/finance">مالی</a><a href="/admin/users">کاربران</a><a href="/admin/models">مدل‌ها و Providerها</a></div>`:''}</aside><main><div class="topbar"><form method="post" action="/workspace"><input type="hidden" name="_csrf" value="${csrf(req)}"><select class="workspace-select" name="workspace" onchange="this.form.submit()">${opts}</select></form><div class="topuser"><span>${esc(u.email)}</span><a href="/logout">خروج</a></div></div>${flash(req)}${content}</main></div>`,{user:u,wide:true})
+}
 
 async function initDb(){await pool.query(`
 create table if not exists users(id text primary key,email text unique not null,name text,password_hash text,google_id text unique,role text not null default 'user',status text not null default 'active',segment text,workspace text,onboarding_done boolean not null default false,wallet_balance_toman numeric(18,2) not null default 0,free_credit_granted boolean not null default false,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
@@ -58,10 +74,13 @@ create table if not exists models(id text primary key,slug text unique not null,
 create table if not exists usage_records(id text primary key,user_id text not null references users(id),api_key_id text references api_keys(id),provider_id text not null references providers(id),model_id text not null references models(id),input_tokens int not null default 0,output_tokens int not null default 0,cost_usd numeric(18,8) not null default 0,charged_toman numeric(18,2) not null default 0,latency_ms int not null default 0,status text not null default 'success',request_id text,created_at timestamptz not null default now());
 create table if not exists wallet_transactions(id text primary key,user_id text not null references users(id),type text not null,amount_toman numeric(18,2) not null,note text,created_at timestamptz not null default now());
 create table if not exists provider_expenses(id text primary key,provider_id text not null references providers(id),amount_usd numeric(18,6) not null default 0,amount_toman numeric(18,2) not null default 0,note text,created_at timestamptz not null default now());
+create table if not exists ai_conversations(id text primary key,user_id text not null references users(id) on delete cascade,workspace text not null default 'simple',title text not null default 'گفت‌وگوی جدید',model_slug text,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
+create table if not exists ai_messages(id text primary key,conversation_id text not null references ai_conversations(id) on delete cascade,role text not null,content text not null,input_tokens int not null default 0,output_tokens int not null default 0,charged_toman numeric(18,2) not null default 0,created_at timestamptz not null default now());
 `);
  let {rows}=await pool.query("select id from providers where key='cloudflare'");let pid=rows[0]?.id;if(!pid){pid=crypto.randomUUID();await pool.query('insert into providers(id,key,name,notes) values($1,$2,$3,$4)',[pid,'cloudflare','Cloudflare AI Gateway','Unified Billing / Workers AI. Configure commercial rights before resale.'])}
  const seeds=[['gpt','GPT','openai/gpt-5.5','general,code'],['claude','Claude','anthropic/claude-sonnet-4-5','reasoning,writing,code'],['gemini','Gemini','google-ai-studio/gemini-2.5-flash','fast,business'],['deepseek','DeepSeek','deepseek/deepseek-chat','value,code'],['llama','Llama','@cf/meta/llama-3.3-70b-instruct-fp8-fast','open,fast']];
  for(const [slug,name,pm,tags] of seeds){await pool.query('insert into models(id,slug,display_name,provider_id,provider_model,tags,active) values($1,$2,$3,$4,$5,$6,false) on conflict(slug) do nothing',[crypto.randomUUID(),slug,name,pid,pm,tags])}
+ await pool.query("update models set provider_model='google-ai-studio/gemini-2.5-flash',input_cost_m_usd=0.315,output_cost_m_usd=2.625,markup_percent=15,tags='fast,business,simple_default',active=true where slug='gemini' and input_cost_m_usd=0 and output_cost_m_usd=0");
 }
 
 app.get('/',(req,res)=>{const boot=JSON.stringify({authenticated:!!req.user,freeCredit:FREE_CREDIT});res.send(`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bavaan AI · هوش مصنوعی، دقیقاً برای کاری که می‌خواهی</title><meta name="description" content="دسترسی PAYG به مدل‌های هوش مصنوعی با یک API، کیف پول ریالی و Workspace متناسب با نوع استفاده."><link rel="stylesheet" href="/static/landing/app.css"></head><body><div id="saas-landing-root"></div><script>window.__BAVAAN__=${boot}</script><script defer src="/static/landing/app.js"></script></body></html>`)});
@@ -72,6 +91,60 @@ app.get('/docs',(req,res)=>res.send(base('مستندات',`${publicHeader(req.us
 -H "Content-Type: application/json" \\
 -d '{"model":"gemini","messages":[{"role":"user","content":"سلام"}]}'</pre><h2 id="auth">API Key</h2><p>از Dashboard ← API Keys یک کلید بساز. مقدار کامل فقط یک بار نمایش داده می‌شود.</p><h2 id="billing">شفافیت هزینه</h2><p>Input، Output، هزینه upstream، مبلغ کسرشده، latency و request ID برای هر درخواست ثبت می‌شود.</p></article></div>`)));
 
+
+function assistantText(data){
+ const content=data?.choices?.[0]?.message?.content;
+ if(typeof content==='string')return content;
+ if(Array.isArray(content))return content.map(x=>typeof x==='string'?x:(x?.text||'')).join('\n').trim();
+ return data?.output_text||data?.response?.output_text||'';
+}
+async function runPaidChat({userId,modelSlug='auto',messages,apiKeyId=null}){
+ const account=process.env.CLOUDFLARE_ACCOUNT_ID,token=process.env.CLOUDFLARE_API_TOKEN;
+ if(!account||!token){const e=new Error('اتصال Provider هنوز تنظیم نشده است.');e.status=503;throw e}
+ let mq;
+ if(modelSlug&&modelSlug!=='auto'){
+  mq=await pool.query("select m.*,p.key provider_key,p.id provider_id from models m join providers p on p.id=m.provider_id where m.slug=$1 and m.active=true and m.modality='text'",[modelSlug]);
+ }else{
+  mq=await pool.query("select m.*,p.key provider_key,p.id provider_id from models m join providers p on p.id=m.provider_id where m.active=true and m.modality='text' order by case when m.tags like '%simple_default%' then 0 else 1 end,(m.input_cost_m_usd+m.output_cost_m_usd) asc limit 1");
+ }
+ const model=mq.rows[0];
+ if(!model){const e=new Error('فعلاً مدل متنی فعالی برای این درخواست وجود ندارد.');e.status=503;throw e}
+ if(model.provider_key!=='cloudflare'){const e=new Error('Adapter این Provider هنوز فعال نشده است.');e.status=501;throw e}
+ const started=Date.now();
+ const upstream=await fetch(`https://api.cloudflare.com/client/v4/accounts/${account}/ai/v1/chat/completions`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json','cf-aig-gateway-id':CLOUDFLARE_GATEWAY_ID},body:JSON.stringify({model:model.provider_model,messages,stream:false})});
+ const data=await upstream.json().catch(()=>({}));
+ if(!upstream.ok){const e=new Error(data?.errors?.[0]?.message||data?.error?.message||'Provider پاسخ نداد.');e.status=upstream.status;e.details=data;throw e}
+ const text=assistantText(data);
+ let input=Number(data?.usage?.prompt_tokens||data?.usage?.input_tokens||0);
+ let output=Number(data?.usage?.completion_tokens||data?.usage?.output_tokens||0);
+ if(!input)input=Math.max(1,Math.ceil(JSON.stringify(messages).length/4));
+ if(!output)output=Math.max(1,Math.ceil(String(text).length/4));
+ const costUsd=input/1e6*Number(model.input_cost_m_usd)+output/1e6*Number(model.output_cost_m_usd);
+ const charge=Math.max(1,Math.ceil(costUsd*USD_TO_TOMAN*(1+Number(model.markup_percent)/100)));
+ const usageId=crypto.randomUUID();
+ await pool.query('begin');
+ try{
+  const bal=await pool.query('select wallet_balance_toman,status from users where id=$1 for update',[userId]);
+  if(!bal.rowCount||bal.rows[0].status!=='active'){const e=new Error('حساب کاربری فعال نیست.');e.status=403;throw e}
+  if(Number(bal.rows[0].wallet_balance_toman)<charge){const e=new Error('موجودی کیف پول کافی نیست.');e.status=402;throw e}
+  await pool.query('update users set wallet_balance_toman=wallet_balance_toman-$1 where id=$2',[charge,userId]);
+  if(apiKeyId)await pool.query('update api_keys set total_spent_toman=total_spent_toman+$1,last_used_at=now() where id=$2',[charge,apiKeyId]);
+  await pool.query("insert into wallet_transactions(id,user_id,type,amount_toman,note) values($1,$2,'usage',$3,$4)",[crypto.randomUUID(),userId,-charge,`${model.display_name} AI usage`]);
+  await pool.query("insert into usage_records(id,user_id,api_key_id,provider_id,model_id,input_tokens,output_tokens,cost_usd,charged_toman,latency_ms,status,request_id) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'success',$11)",[usageId,userId,apiKeyId,model.provider_id,model.id,input,output,costUsd,charge,Date.now()-started,data?.id||null]);
+  await pool.query('commit');
+ }catch(e){await pool.query('rollback');throw e}
+ return {data,text,model,input,output,costUsd,charge,latencyMs:Date.now()-started,requestId:data?.id||usageId};
+}
+function modeInstruction(mode){
+ const map={
+  write:'تو یک دستیار حرفه‌ای نویسندگی فارسی هستی. متن شفاف، طبیعی و متناسب با درخواست کاربر بنویس.',
+  translate:'تو مترجم حرفه‌ای هستی. متن را دقیق و روان ترجمه کن و اگر زبان مقصد مشخص نیست از کاربر بخواه مشخص کند.',
+  summarize:'تو یک دستیار تحلیل و خلاصه‌سازی هستی. نکات اصلی را دقیق و ساختاریافته استخراج کن.',
+  creative:'تو دستیار ایده‌پردازی و پرامپت‌نویسی خلاق هستی. برای محتوا، تصویر و ویدئو ایده و پرامپت عملی بده.',
+  chat:'تو دستیار عمومی Bavaan AI هستی. پاسخ مفید، دقیق و مستقیم بده.'
+ };
+ return map[mode]||map.chat;
+}
 app.get('/register',(req,res)=>{if(req.user)return res.redirect('/dashboard');res.send(base('ثبت‌نام',`<div class="authpage"><div class="authcard"><a href="/" class="brand"><span class="brandmark">B</span><b>Bavaan AI</b></a><h1>حسابت رو بساز</h1><p class="sub">بدون خرید اولیه، با ${toman(FREE_CREDIT)} اعتبار هدیه.</p>${flash(req)}<form class="stack" method="post" action="/register"><input type="hidden" name="_csrf" value="${csrf(req)}"><input name="name" placeholder="نام"><input name="email" type="email" dir="ltr" placeholder="Email" required><input name="password" type="password" dir="ltr" minlength="8" placeholder="رمز عبور، حداقل ۸ کاراکتر" required><button class="btn primary">ساخت حساب</button></form>${process.env.GOOGLE_CLIENT_ID?`<div class="or">یا</div><a class="btn ghost wide" href="/auth/google">ثبت‌نام با Google</a>`:''}<p class="sub">حساب داری؟ <a href="/login">ورود</a></p></div></div>`))});
 app.post('/register',checkCsrf,async(req,res)=>{const email=String(req.body.email||'').trim().toLowerCase(),pass=String(req.body.password||'');if(!email||pass.length<8){req.session.flash={type:'error',text:'ایمیل معتبر و رمز حداقل ۸ کاراکتری لازم است.'};return res.redirect('/register')}const ex=await pool.query('select 1 from users where email=$1',[email]);if(ex.rowCount){req.session.flash={type:'error',text:'این ایمیل قبلاً ثبت شده.'};return res.redirect('/register')}const id=crypto.randomUUID(),hash=await bcrypt.hash(pass,12),role=email===ADMIN_EMAIL?'admin':'user';await pool.query('insert into users(id,email,name,password_hash,role,wallet_balance_toman,free_credit_granted) values($1,$2,$3,$4,$5,$6,true)',[id,email,req.body.name||null,hash,role,FREE_CREDIT]);await pool.query("insert into wallet_transactions(id,user_id,type,amount_toman,note) values($1,$2,'free_credit',$3,$4)",[crypto.randomUUID(),id,FREE_CREDIT,'اعتبار هدیه شروع']);const {rows}=await pool.query('select * from users where id=$1',[id]);req.login(rows[0],e=>e?res.status(500).send('Login failed'):res.redirect('/onboarding'))});
 app.get('/login',(req,res)=>{if(req.user)return res.redirect('/dashboard');res.send(base('ورود',`<div class="authpage"><div class="authcard"><a href="/" class="brand"><span class="brandmark">B</span><b>Bavaan AI</b></a><h1>خوش برگشتی</h1>${flash(req)}<form class="stack" method="post" action="/login"><input type="hidden" name="_csrf" value="${csrf(req)}"><input name="email" type="email" dir="ltr" placeholder="Email" required><input name="password" type="password" dir="ltr" placeholder="رمز عبور" required><button class="btn primary">ورود</button></form>${process.env.GOOGLE_CLIENT_ID?`<div class="or">یا</div><a class="btn ghost wide" href="/auth/google">ورود با Google</a>`:''}<p class="sub">حساب نداری؟ <a href="/register">ثبت‌نام</a></p></div></div>`))});
@@ -84,7 +157,70 @@ app.get('/onboarding',guard,(req,res)=>res.send(base('شروع',`<div class="onb
 app.post('/onboarding',guard,checkCsrf,async(req,res)=>{const s=SEGMENTS[req.body.segment];if(!s)return res.redirect('/onboarding');await pool.query('update users set segment=$1,workspace=$2,onboarding_done=true,updated_at=now() where id=$3',[req.body.segment,s.workspace,req.user.id]);req.user.segment=req.body.segment;req.user.workspace=s.workspace;req.user.onboarding_done=true;res.redirect('/dashboard')});
 app.post('/workspace',guard,checkCsrf,async(req,res)=>{if(!WORKSPACES[req.body.workspace])return res.redirect('/dashboard');await pool.query('update users set workspace=$1,updated_at=now() where id=$2',[req.body.workspace,req.user.id]);req.user.workspace=req.body.workspace;res.redirect(req.get('referer')||'/dashboard')});
 
-app.get('/dashboard',guard,async(req,res)=>{if(!req.user.onboarding_done)return res.redirect('/onboarding');const q=await pool.query('select coalesce(sum(charged_toman),0) spend,count(*) requests from usage_records where user_id=$1',[req.user.id]);const k=await pool.query('select count(*) c from api_keys where user_id=$1 and active=true',[req.user.id]);const ws=req.user.workspace||'simple';const x=q.rows[0];res.send(appShell(req,'داشبورد',`<div class="dash"><div class="dashhead"><div><h1>سلام ${esc(req.user.name||'')}</h1><div class="sub">Workspace: ${WORKSPACES[ws]}</div></div></div><div class="stats"><div class="stat"><span>موجودی کیف پول</span><b>${toman(req.user.wallet_balance_toman)}</b></div><div class="stat"><span>مصرف کل</span><b>${toman(x.spend)}</b></div><div class="stat"><span>Request</span><b>${Number(x.requests).toLocaleString('fa-IR')}</b></div><div class="stat"><span>API Key فعال</span><b>${Number(k.rows[0].c).toLocaleString('fa-IR')}</b></div></div><div class="workspacehero"><div class="card hero-card"><span class="badge">فضای پیشنهادی تو</span><h2>${WORKSPACES[ws]}</h2><p>ابزارها بر اساس نوع استفاده‌ات مرتب شده‌اند. هر وقت خواستی از بالای صفحه Workspace را عوض کن.</p><div class="quickgrid">${workspaceCards(ws)}</div></div><div class="card"><h3>هزینه‌ی این حساب</h3><b class="huge">${toman(x.spend)}</b><p>بر اساس مصرف واقعی API</p></div></div></div>`))});
+app.get('/dashboard',guard,async(req,res)=>{
+ if(!req.user.onboarding_done)return res.redirect('/onboarding');
+ const q=await pool.query('select coalesce(sum(charged_toman),0) spend,count(*) requests,coalesce(avg(latency_ms),0) latency from usage_records where user_id=$1',[req.user.id]);
+ const k=await pool.query('select count(*) c from api_keys where user_id=$1 and active=true',[req.user.id]);
+ const ws=req.user.workspace||'simple';const x=q.rows[0];
+ let hero='';
+ if(ws==='api'){
+  hero=`<div class="workspacehero"><div class="card hero-card"><span class="badge">Developer Workspace</span><h2>از Playground تا Production</h2><p>مدل را تست کن، هزینه و latency را ببین، بعد همان درخواست را با API Key وارد محصولت کن.</p><div class="quickgrid"><a class="quick" href="/dashboard/ai"><b>Playground واقعی</b><small>ارسال درخواست و دیدن Token / Cost / Latency</small></a><a class="quick" href="/dashboard/api-keys"><b>کلیدهای API</b><small>کلید جدا برای تست و Production</small></a><a class="quick" href="/dashboard/models"><b>مدل‌های فعال</b><small>شناسه API و Provider</small></a></div></div><div class="card"><h3>شروع سریع</h3><p class="sub">اول یک مدل را در Playground تست کن.</p><a class="btn primary wide" href="/dashboard/ai">باز کردن Playground</a></div></div>`;
+ }else if(ws==='simple'){
+  hero=`<div class="simple-home"><div class="simple-welcome"><span class="badge">فضای ساده</span><h2>امروز می‌خوای چه کاری انجام بدی؟</h2><p>لازم نیست مدل انتخاب کنی. Bavaan پشت صحنه یک مدل مناسب و فعال را استفاده می‌کند.</p></div><div class="taskgrid"><a href="/dashboard/ai" class="taskcard"><b>گفت‌وگو و سؤال</b><span>هر چیزی بپرس و ادامه بده.</span></a><a href="/dashboard/ai?mode=write" class="taskcard"><b>نوشتن و بازنویسی</b><span>ایمیل، کپشن، متن و ایده.</span></a><a href="/dashboard/ai?mode=translate" class="taskcard"><b>ترجمه</b><span>ترجمه روان با حفظ معنی.</span></a><a href="/dashboard/ai?mode=summarize" class="taskcard"><b>خلاصه‌سازی</b><span>متن طولانی را کوتاه و قابل استفاده کن.</span></a></div></div>`;
+ }else{
+  hero=`<div class="workspacehero"><div class="card hero-card"><span class="badge">فضای پیشنهادی تو</span><h2>${WORKSPACES[ws]}</h2><p>ابزارها بر اساس نوع استفاده‌ات مرتب شده‌اند و Wallet و Usage بین همه Workspaceها مشترک است.</p><div class="quickgrid">${workspaceCards(ws)}</div></div><div class="card"><h3>AI Studio</h3><p>برای کار متنی همین حالا از محیط AI استفاده کن.</p><a class="btn primary wide" href="/dashboard/ai">باز کردن AI Studio</a></div></div>`;
+ }
+ res.send(appShell(req,'داشبورد',`<div class="dash"><div class="dashhead"><div><h1>سلام ${esc(req.user.name||'')}</h1><div class="sub">${WORKSPACES[ws]}</div></div></div><div class="stats"><div class="stat"><span>موجودی کیف پول</span><b>${toman(req.user.wallet_balance_toman)}</b></div><div class="stat"><span>مصرف کل</span><b>${toman(x.spend)}</b></div><div class="stat"><span>Request</span><b>${Number(x.requests).toLocaleString('fa-IR')}</b></div><div class="stat"><span>میانگین Latency</span><b>${Math.round(Number(x.latency||0)).toLocaleString('fa-IR')} ms</b></div></div>${hero}</div>`))
+});
+
+app.get('/dashboard/ai',guard,async(req,res)=>{
+ if(!req.user.onboarding_done)return res.redirect('/onboarding');
+ const ws=req.user.workspace||'simple';
+ const allowedModes=['chat','write','translate','summarize','creative'];
+ const mode=allowedModes.includes(String(req.query.mode||''))?String(req.query.mode):'chat';
+ const [models,recent]=await Promise.all([
+  pool.query("select slug,display_name,tags,input_cost_m_usd,output_cost_m_usd from models where active=true and modality='text' order by case when tags like '%simple_default%' then 0 else 1 end,display_name"),
+  pool.query('select id,title,updated_at from ai_conversations where user_id=$1 order by updated_at desc limit 10',[req.user.id])
+ ]);
+ let conversation=null,messages=[];
+ if(req.query.c){
+  const cq=await pool.query('select * from ai_conversations where id=$1 and user_id=$2',[String(req.query.c),req.user.id]);
+  conversation=cq.rows[0]||null;
+  if(conversation){const mq=await pool.query('select role,content,charged_toman,created_at from ai_messages where conversation_id=$1 order by created_at asc limit 100',[conversation.id]);messages=mq.rows}
+ }
+ const developer=ws==='api'||ws==='production'||ws==='automation';
+ const modelOptions=models.rows.map(m=>`<option value="${esc(m.slug)}" ${conversation?.model_slug===m.slug?'selected':''}>${esc(m.display_name)} · ${esc(m.slug)}</option>`).join('');
+ const recentHtml=recent.rows.map(x=>`<a href="/dashboard/ai?c=${encodeURIComponent(x.id)}" class="conversation-link ${conversation?.id===x.id?'active':''}"><b>${esc(x.title)}</b><small>${new Date(x.updated_at).toLocaleDateString('fa-IR')}</small></a>`).join('');
+ const msgHtml=messages.map(m=>`<div class="chatmsg ${m.role==='user'?'user':'assistant'}"><div class="chatbubble">${esc(m.content).replace(/\n/g,'<br>')}</div>${m.role==='assistant'&&Number(m.charged_toman)>0?`<small>${toman(m.charged_toman)}</small>`:''}</div>`).join('');
+ const modeTabs=[['chat','گفت‌وگو'],['write','نوشتن'],['translate','ترجمه'],['summarize','خلاصه‌سازی'],['creative','ایده‌پردازی']].map(([k,l])=>`<a class="modechip ${mode===k?'active':''}" href="/dashboard/ai?mode=${k}">${l}</a>`).join('');
+ res.send(appShell(req,developer?'Playground':'Bavaan AI',`<div class="dash ai-page"><div class="ai-layout"><aside class="conversation-panel"><a class="btn primary wide" href="/dashboard/ai?mode=${mode}">گفت‌وگوی جدید</a><div class="conversation-list">${recentHtml||'<p class="sub">هنوز گفت‌وگویی نداری.</p>'}</div></aside><section class="ai-studio"><div class="ai-studio-head"><div><span class="badge">${developer?'Developer Playground':'Bavaan AI'}</span><h1>${developer?'مدل را تست کن و هزینه را همان لحظه ببین':'چه کاری می‌خوای انجام بدی؟'}</h1><p class="sub">${developer?'پاسخ، Token، Cost، Latency و Request ID در همین صفحه ثبت می‌شود.':'مدل مناسب پشت صحنه انتخاب می‌شود و هزینه از اعتبارت کم می‌شود.'}</p></div><div class="wallet-chip">موجودی: <b>${toman(req.user.wallet_balance_toman)}</b></div></div><div class="modechips">${modeTabs}</div>${developer?`<label class="model-control">مدل<select id="aiModel">${modelOptions}</select></label>`:''}<div id="chatMessages" class="chat-messages">${msgHtml||'<div class="chat-empty"><b>آماده‌ام.</b><span>درخواستت را پایین بنویس.</span></div>'}</div><form id="aiComposer" class="ai-composer" data-csrf="${csrf(req)}" data-conversation="${conversation?.id||''}" data-mode="${mode}" data-developer="${developer?'1':'0'}"><textarea id="aiPrompt" rows="3" maxlength="12000" placeholder="${mode==='write'?'مثلاً: یک متن معرفی کوتاه برای محصولم بنویس…':mode==='translate'?'متنی که می‌خوای ترجمه بشه را اینجا بنویس…':mode==='summarize'?'متن طولانی را اینجا قرار بده…':'پیامت را بنویس…'}" required></textarea><div class="composer-actions"><div id="aiMeta" class="ai-meta">هزینه بعد از پاسخ نمایش داده می‌شود.</div><button id="aiSend" class="btn primary" type="submit">ارسال</button></div></form></section></div></div><script defer src="/static/workspace-ai.js"></script>`))
+});
+
+app.post('/dashboard/ai/chat',guard,checkCsrf,async(req,res)=>{
+ try{
+  const prompt=String(req.body.prompt||'').trim();if(!prompt)return res.status(400).json({ok:false,error:'پیام خالی است.'});if(prompt.length>12000)return res.status(400).json({ok:false,error:'متن درخواست بیش از حد طولانی است.'});
+  const ws=req.user.workspace||'simple';const mode=['chat','write','translate','summarize','creative'].includes(req.body.mode)?req.body.mode:'chat';
+  let conv=null;
+  if(req.body.conversation_id){const cq=await pool.query('select * from ai_conversations where id=$1 and user_id=$2',[String(req.body.conversation_id),req.user.id]);conv=cq.rows[0]||null}
+  if(!conv){conv={id:crypto.randomUUID(),user_id:req.user.id,workspace:ws,title:prompt.replace(/\s+/g,' ').slice(0,58)+(prompt.length>58?'…':''),model_slug:null};await pool.query('insert into ai_conversations(id,user_id,workspace,title) values($1,$2,$3,$4)',[conv.id,req.user.id,ws,conv.title])}
+  const history=await pool.query("select role,content from ai_messages where conversation_id=$1 and role in ('user','assistant') order by created_at desc limit 18",[conv.id]);
+  const chronological=history.rows.reverse();
+  const developer=ws==='api'||ws==='production'||ws==='automation';
+  const requestedModel=developer&&req.body.model?String(req.body.model):'auto';
+  const chatMessages=[{role:'system',content:modeInstruction(mode)},...chronological,{role:'user',content:prompt}];
+  const result=await runPaidChat({userId:req.user.id,modelSlug:requestedModel,messages:chatMessages});
+  await pool.query('begin');
+  try{
+   await pool.query("insert into ai_messages(id,conversation_id,role,content) values($1,$2,'user',$3)",[crypto.randomUUID(),conv.id,prompt]);
+   await pool.query("insert into ai_messages(id,conversation_id,role,content,input_tokens,output_tokens,charged_toman) values($1,$2,'assistant',$3,$4,$5,$6)",[crypto.randomUUID(),conv.id,result.text,result.input,result.output,result.charge]);
+   await pool.query('update ai_conversations set model_slug=$1,updated_at=now() where id=$2',[result.model.slug,conv.id]);
+   await pool.query('commit');
+  }catch(e){await pool.query('rollback');throw e}
+  const b=await pool.query('select wallet_balance_toman from users where id=$1',[req.user.id]);req.user.wallet_balance_toman=b.rows[0].wallet_balance_toman;
+  res.json({ok:true,conversation_id:conv.id,answer:result.text,model:result.model.slug,input_tokens:result.input,output_tokens:result.output,charged_toman:result.charge,latency_ms:result.latencyMs,request_id:result.requestId,wallet_balance_toman:Number(b.rows[0].wallet_balance_toman)});
+ }catch(e){console.error(e);res.status(e.status||500).json({ok:false,error:e.message||'خطایی در اجرای مدل رخ داد.'})}
+});
+
 app.get('/dashboard/models',guard,async(req,res)=>{const {rows}=await pool.query('select m.*,p.name provider_name from models m join providers p on p.id=m.provider_id order by m.display_name');res.send(appShell(req,'مدل‌ها',`<div class="dash"><h1>مدل‌ها</h1><p class="sub">شناسه پایدار Bavaan و upstream پشت آن.</p><div class="card"><table class="table"><tr><th>مدل</th><th>شناسه API</th><th>Provider</th><th>وضعیت</th></tr>${rows.map(m=>`<tr><td><b>${esc(m.display_name)}</b></td><td dir="ltr">${esc(m.slug)}</td><td>${esc(m.provider_name)}</td><td><span class="pill">${m.active?'فعال':'غیرفعال'}</span></td></tr>`).join('')}</table></div></div>`))});
 app.get('/dashboard/api-keys',guard,async(req,res)=>{const {rows}=await pool.query('select * from api_keys where user_id=$1 order by created_at desc',[req.user.id]);const raw=req.session.newKey;delete req.session.newKey;res.send(appShell(req,'API Keys',`<div class="dash"><div class="dashhead"><div><h1>API Keys</h1><p class="sub">برای پروژه‌ها یا مشتری‌ها کلید جدا بساز.</p></div><form method="post" action="/dashboard/api-keys"><input type="hidden" name="_csrf" value="${csrf(req)}"><button class="btn primary">ساخت API Key</button></form></div>${raw?`<div class="secretbox"><b>این کلید فقط همین یک‌بار نمایش داده می‌شود:</b><code>${esc(raw)}</code></div>`:''}<div class="card"><table class="table"><tr><th>نام</th><th>کلید</th><th>مصرف</th><th>آخرین استفاده</th></tr>${rows.map(k=>`<tr><td>${esc(k.name)}</td><td dir="ltr">${esc(k.prefix)}••••••</td><td>${toman(k.total_spent_toman)}</td><td>${k.last_used_at?new Date(k.last_used_at).toLocaleString('fa-IR'):'—'}</td></tr>`).join('')}</table></div></div>`))});
 app.post('/dashboard/api-keys',guard,checkCsrf,async(req,res)=>{const raw='bv_'+crypto.randomBytes(24).toString('hex'),hash=crypto.createHash('sha256').update(raw).digest('hex');await pool.query('insert into api_keys(id,user_id,name,prefix,key_hash) values($1,$2,$3,$4,$5)',[crypto.randomUUID(),req.user.id,'کلید '+new Date().toLocaleDateString('fa-IR'),raw.slice(0,11),hash]);req.session.newKey=raw;res.redirect('/dashboard/api-keys')});
