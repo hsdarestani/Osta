@@ -70,3 +70,81 @@
   .chatmsg{max-width:95%}
   .ai-composer{padding:10px}
 }
+
+/* Productized workspace architecture */
+.workspace-switcher{display:flex;align-items:center;gap:9px}
+.workspace-switcher>span{font-size:11px;color:var(--muted);white-space:nowrap}
+.workspace-switcher .workspace-select{min-width:170px;max-width:210px;background:#0b0e13}
+.workspace-product{max-width:1280px}
+.product-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding:26px;border:1px solid var(--line);border-radius:22px;background:radial-gradient(circle at 85% 15%,#8cffb516,transparent 32%),var(--panel)}
+.product-hero h1{margin:10px 0 6px;font-size:30px;line-height:1.55}
+.product-hero p{margin:0;color:var(--muted);max-width:760px}
+.hero-kpis{display:grid;grid-template-columns:repeat(2,minmax(120px,1fr));gap:10px;min-width:300px}
+.hero-kpis>div{padding:14px;border:1px solid var(--line);border-radius:15px;background:#ffffff04}
+.hero-kpis span,.health-card span{display:block;color:var(--muted);font-size:12px}
+.hero-kpis b,.health-card>b{display:block;margin-top:5px;font-size:21px}
+.product-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.7fr);gap:14px;margin-top:14px}
+.section-title{display:flex;align-items:end;justify-content:space-between;margin:0 0 12px}
+.section-title h2{margin:0}
+.project-grid{display:grid;gap:12px}
+.project-card{padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--panel)}
+.project-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.project-head h3{margin:7px 0 1px}.project-head>b{font-size:18px}
+.project-metrics{display:flex;flex-wrap:wrap;gap:10px 18px;padding:14px 0;color:var(--muted);font-size:12px}
+.project-metrics b{color:var(--text)}
+.tool-panel{height:max-content;padding:20px;border:1px solid var(--line);border-radius:18px;background:var(--panel);position:sticky;top:88px}
+.tool-panel h3{margin-top:0}
+.tool-note,.roadmap-note{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#ffffff04}
+.tool-note p,.roadmap-note span{display:block;margin:5px 0 0;color:var(--muted);font-size:13px;line-height:1.8}
+.empty-product{display:grid;gap:5px;place-items:center;min-height:220px;border:1px dashed var(--line);border-radius:18px;color:var(--muted);text-align:center}.empty-product b{color:var(--text)}
+.health-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.health-card{padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--panel)}
+.health-card small{display:block;margin-top:4px}
+.budget-line{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}
+.budget-line>div{padding:13px;border:1px solid var(--line);border-radius:14px;background:#ffffff04}
+.budget-line span{display:block;color:var(--muted);font-size:12px}.budget-line b{display:block;margin-top:4px}
+.progress-outer{height:9px;border-radius:999px;background:#ffffff08;overflow:hidden}.progress-inner{height:100%;border-radius:inherit;background:var(--brand);min-width:0}
+.status-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.business-tools{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
+.business-tool{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;padding:19px;border:1px solid var(--line);border-radius:19px;background:var(--panel);transition:.2s ease}
+.business-tool:hover{transform:translateY(-2px);border-color:#8cffb555}
+.business-tool b{display:block}.business-tool p{margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.8}
+.tool-icon,.creative-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#8cffb511;border:1px solid #8cffb533;color:var(--brand)}
+.tool-go{color:var(--brand);font-size:12px}
+.creative-tools{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.creative-tool{padding:20px;border:1px solid var(--line);border-radius:19px;background:var(--panel);transition:.2s ease}
+.creative-tool:hover{transform:translateY(-2px);border-color:#8cffb555}
+.creative-tool b{display:block;margin-top:24px}.creative-tool p{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.8}
+.capability-state{display:grid;gap:8px;min-width:280px}.capability-state span{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:#ffffff04;color:var(--muted);font-size:12px}
+.capability-state b{color:var(--text)}
+.prompt-suggestions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:700px;margin-top:14px}
+.prompt-suggestion{border:1px solid var(--line);background:#ffffff05;color:var(--text);border-radius:999px;padding:9px 13px;cursor:pointer;font:inherit;font-size:12px;transition:.18s ease}
+.prompt-suggestion:hover{border-color:#8cffb555;background:#8cffb50b}
+.chat-empty{min-height:220px}
+.mobile-workspace-nav{background:#090c10}
+@media(max-width:900px){
+  .workspace-switcher>span{display:none}
+  .workspace-switcher .workspace-select{width:min(190px,58vw);min-width:0}
+  .mobile-workspace-nav{gap:0;border-bottom:1px solid var(--line);padding:0 12px}
+  .mobile-workspace-nav a{border:0;border-radius:0;background:transparent;padding:12px 13px;border-bottom:2px solid transparent}
+  .mobile-workspace-nav a:hover,.mobile-workspace-nav a:focus-visible{border-bottom-color:var(--brand);background:transparent}
+  .product-hero{display:grid;padding:18px}
+  .product-hero h1{font-size:24px}
+  .hero-kpis,.capability-state{min-width:0;width:100%}
+  .product-grid{grid-template-columns:1fr}
+  .tool-panel{position:static}
+  .health-grid{grid-template-columns:1fr 1fr}
+  .business-tools{grid-template-columns:1fr}
+  .creative-tools{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .workspace-switcher{width:100%}.workspace-switcher .workspace-select{width:100%;max-width:none}
+  .topbar{grid-template-columns:minmax(0,1fr) auto}
+  .health-grid,.creative-tools{grid-template-columns:1fr}
+  .hero-kpis{grid-template-columns:1fr 1fr}
+  .business-tool{grid-template-columns:auto 1fr}.business-tool .tool-go{grid-column:2}
+  .product-hero{border-radius:17px}
+  .chat-empty{min-height:150px;padding:24px 10px}
+  .prompt-suggestions{justify-content:stretch}
+  .prompt-suggestion{width:100%;text-align:start;border-radius:13px}
+}
