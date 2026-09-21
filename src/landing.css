@@ -85,3 +85,27 @@
   .node-a{inset-inline-start:4%;inset-block-start:10%}.node-b{inset-inline-end:4%;inset-block-start:10%}.node-c{inset-inline-start:4%;inset-block-end:10%}.node-d{inset-inline-end:4%;inset-block-end:10%}.node-e{inset-block-start:30%}
   .beam{opacity:.45}
 }
+
+@media (max-width:640px){
+  html,body{max-inline-size:100%;overflow-x:hidden}
+  .beam-frame{border-radius:1.15rem}
+  .terminal-grid{background-size:24px 24px}
+  .marquee-track{animation-duration:30s}
+  .integration-stage{min-block-size:560px;border-radius:1.25rem}
+  .integration-hub{inline-size:94px;block-size:94px;border-radius:24px}
+  .integration-node{inline-size:104px;min-block-size:48px;padding:.55rem .65rem;font-size:.72rem}
+  .node-a{inset-inline-start:3%;inset-block-start:8%}
+  .node-b{inset-inline-end:3%;inset-block-start:8%}
+  .node-c{inset-inline-start:3%;inset-block-end:8%}
+  .node-d{inset-inline-end:3%;inset-block-end:8%}
+  .node-e{inset-inline-start:50%;inset-block-start:25%}
+  .stack-shell{min-block-size:330px}
+  .stack-card{max-inline-size:calc(100vw - 2rem)}
+  .stack-card:nth-child(2){transform:translateY(18px) scale(.97)}
+  .stack-card:nth-child(3){transform:translateY(36px) scale(.94)}
+  .grid-background{background-size:24px 24px}
+}
+@media (max-width:390px){
+  .integration-node{inline-size:94px;font-size:.68rem}
+  .integration-stage{min-block-size:530px}
+}
