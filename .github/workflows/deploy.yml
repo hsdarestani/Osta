@@ -48,6 +48,8 @@ jobs:
               sleep 2
             done
             curl -fsS http://127.0.0.1:3088/healthz
+            docker compose exec -T app grep -q "app.post('/dashboard/ai/chat'" /app/server.js
+            docker compose exec -T app test -s /app/public/workspace-ai.js
             if ! command -v nginx >/dev/null 2>&1; then apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y nginx; fi
             cp nginx-ai.bavaan.ir.conf /etc/nginx/sites-available/ai.bavaan.ir
             ln -sf /etc/nginx/sites-available/ai.bavaan.ir /etc/nginx/sites-enabled/ai.bavaan.ir
