@@ -54,32 +54,87 @@ function Odometer({ target }: { target: number }) {
   return <>{fa.format(value)} تومان</>;
 }
 
+function BrainGraphic() {
+  return (
+    <div className="brain-3d" aria-hidden="true">
+      <div className="brain-shadow" />
+      <svg viewBox="0 0 420 340" className="brain-svg" role="img">
+        <defs>
+          <linearGradient id="brainA" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stopColor="#54f0c4" />
+            <stop offset="42%" stopColor="#31c9ff" />
+            <stop offset="100%" stopColor="#845cff" />
+          </linearGradient>
+          <linearGradient id="brainB" x1="1" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#ff6bc7" />
+            <stop offset="45%" stopColor="#7b6dff" />
+            <stop offset="100%" stopColor="#2fe0c0" />
+          </linearGradient>
+          <linearGradient id="brainDepth" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#162b46" />
+            <stop offset="100%" stopColor="#08101f" />
+          </linearGradient>
+          <filter id="brainGlow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="8" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+        <ellipse cx="210" cy="290" rx="112" ry="24" fill="#020711" opacity=".55" />
+        <path d="M118 244 C76 223 70 172 98 143 C83 104 111 75 151 76 C166 47 205 43 226 64 C259 45 297 66 300 99 C337 106 351 142 335 170 C354 205 330 240 296 245 C278 276 237 281 211 260 C180 281 140 271 118 244Z" fill="url(#brainDepth)" opacity=".98" transform="translate(0 14)" />
+        <g filter="url(#brainGlow)" className="brain-lobes">
+          <path d="M114 225 C78 205 77 164 101 140 C88 108 111 80 147 82 C159 54 193 51 210 71 L210 251 C179 273 135 257 114 225Z" fill="url(#brainA)" />
+          <path d="M210 71 C235 49 276 62 281 94 C318 96 335 131 321 158 C346 190 328 226 294 232 C277 260 240 270 210 251Z" fill="url(#brainB)" />
+        </g>
+        <g fill="none" stroke="#e8fbff" strokeOpacity=".54" strokeWidth="5" strokeLinecap="round">
+          <path d="M133 105 C157 97 171 115 162 132 C151 151 165 163 184 158" />
+          <path d="M109 157 C132 149 146 166 136 183 C126 202 145 217 166 210" />
+          <path d="M177 83 C191 95 185 111 174 119" />
+          <path d="M168 225 C183 211 192 195 180 178" />
+          <path d="M245 84 C228 99 235 118 251 125 C269 134 265 151 250 160" />
+          <path d="M294 113 C274 114 262 130 270 147 C281 169 264 180 246 179" />
+          <path d="M315 174 C292 166 278 187 290 204" />
+          <path d="M237 225 C226 211 231 194 245 188" />
+        </g>
+        <path d="M210 75 L210 250" stroke="#c8fff0" strokeOpacity=".45" strokeWidth="3" strokeDasharray="7 9" />
+        <g className="brain-points">
+          <circle cx="137" cy="120" r="5" fill="#fff" />
+          <circle cx="172" cy="160" r="4" fill="#fff" />
+          <circle cx="279" cy="139" r="5" fill="#fff" />
+          <circle cx="247" cy="189" r="4" fill="#fff" />
+        </g>
+      </svg>
+      <div className="brain-base"><span>B</span><strong>Bavaan Core</strong></div>
+    </div>
+  );
+}
+
 function HeroNetwork() {
   const nodes = [
-    ["OpenAI", "oai", "node-1"],
-    ["Claude", "cl", "node-2"],
-    ["Gemini", "gm", "node-3"],
-    ["DeepSeek", "ds", "node-4"],
-    ["Qwen", "qw", "node-5"],
-    ["Llama", "ll", "node-6"]
+    ["OpenAI", "oai", "node-1", "mint"],
+    ["Claude", "cl", "node-2", "violet"],
+    ["Gemini", "gm", "node-3", "blue"],
+    ["DeepSeek", "ds", "node-4", "pink"],
+    ["Qwen", "qw", "node-5", "amber"],
+    ["Llama", "ll", "node-6", "cyan"]
   ];
   return (
-    <div className="hero-visual" aria-label="اتصال Bavaan به چند مدل هوش مصنوعی">
+    <div className="hero-visual" aria-label="مغز هوش مصنوعی Bavaan و اتصال به چند مدل">
       <div className="hero-grid" />
       <div className="hero-glow" />
       <div className="orbit orbit-a" />
       <div className="orbit orbit-b" />
-      {nodes.map(([name, short, cls]) => (
-        <div key={name} className={cn("model-node", cls)}>
+      <div className="orbit orbit-c" />
+      <BrainGraphic />
+      {nodes.map(([name, short, cls, tone]) => (
+        <div key={name} className={cn("model-node", cls, "tone-" + tone)}>
           <span className="model-node-mark">{short}</span>
           <span>{name}</span>
         </div>
       ))}
-      <div className="hero-hub">
-        <div className="hero-hub-core">B</div>
-        <strong>Bavaan AI</strong>
-        <span>Unified Gateway</span>
-      </div>
+      <div className="vector-cube cube-a"><i /><b /><em /></div>
+      <div className="vector-cube cube-b"><i /><b /><em /></div>
+      <div className="vector-orb orb-a" />
+      <div className="vector-orb orb-b" />
       <div className="signal-dot signal-1" />
       <div className="signal-dot signal-2" />
       <div className="signal-dot signal-3" />
