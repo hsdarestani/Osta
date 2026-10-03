@@ -1,4 +1,5 @@
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
+import * as THREE from "three";
 import { createRoot } from "react-dom/client";
 import {
   ArrowRight, Bot, Braces, Check, CheckCircle2, Code2, Cpu,
@@ -54,58 +55,285 @@ function Odometer({ target }: { target: number }) {
   return <>{fa.format(value)} تومان</>;
 }
 
-function BrainGraphic() {
-  return (
-    <div className="brain-3d" aria-hidden="true">
-      <div className="brain-shadow" />
-      <svg viewBox="0 0 420 340" className="brain-svg" role="img">
-        <defs>
-          <linearGradient id="brainA" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0%" stopColor="#54f0c4" />
-            <stop offset="42%" stopColor="#31c9ff" />
-            <stop offset="100%" stopColor="#845cff" />
-          </linearGradient>
-          <linearGradient id="brainB" x1="1" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#ff6bc7" />
-            <stop offset="45%" stopColor="#7b6dff" />
-            <stop offset="100%" stopColor="#2fe0c0" />
-          </linearGradient>
-          <linearGradient id="brainDepth" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#162b46" />
-            <stop offset="100%" stopColor="#08101f" />
-          </linearGradient>
-          <filter id="brainGlow" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="8" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-        </defs>
-        <ellipse cx="210" cy="290" rx="112" ry="24" fill="#020711" opacity=".55" />
-        <path d="M118 244 C76 223 70 172 98 143 C83 104 111 75 151 76 C166 47 205 43 226 64 C259 45 297 66 300 99 C337 106 351 142 335 170 C354 205 330 240 296 245 C278 276 237 281 211 260 C180 281 140 271 118 244Z" fill="url(#brainDepth)" opacity=".98" transform="translate(0 14)" />
-        <g filter="url(#brainGlow)" className="brain-lobes">
-          <path d="M114 225 C78 205 77 164 101 140 C88 108 111 80 147 82 C159 54 193 51 210 71 L210 251 C179 273 135 257 114 225Z" fill="url(#brainA)" />
-          <path d="M210 71 C235 49 276 62 281 94 C318 96 335 131 321 158 C346 190 328 226 294 232 C277 260 240 270 210 251Z" fill="url(#brainB)" />
-        </g>
-        <g fill="none" stroke="#e8fbff" strokeOpacity=".54" strokeWidth="5" strokeLinecap="round">
-          <path d="M133 105 C157 97 171 115 162 132 C151 151 165 163 184 158" />
-          <path d="M109 157 C132 149 146 166 136 183 C126 202 145 217 166 210" />
-          <path d="M177 83 C191 95 185 111 174 119" />
-          <path d="M168 225 C183 211 192 195 180 178" />
-          <path d="M245 84 C228 99 235 118 251 125 C269 134 265 151 250 160" />
-          <path d="M294 113 C274 114 262 130 270 147 C281 169 264 180 246 179" />
-          <path d="M315 174 C292 166 278 187 290 204" />
-          <path d="M237 225 C226 211 231 194 245 188" />
-        </g>
-        <path d="M210 75 L210 250" stroke="#c8fff0" strokeOpacity=".45" strokeWidth="3" strokeDasharray="7 9" />
-        <g className="brain-points">
-          <circle cx="137" cy="120" r="5" fill="#fff" />
-          <circle cx="172" cy="160" r="4" fill="#fff" />
-          <circle cx="279" cy="139" r="5" fill="#fff" />
-          <circle cx="247" cy="189" r="4" fill="#fff" />
-        </g>
-      </svg>
-      <div className="brain-base"><span>B</span><strong>Bavaan Core</strong></div>
-    </div>
-  );
+function WebGLArt({ variant }: { variant: "brain" | "router" }) {
+  const mountRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
+    camera.position.set(0, 0.15, variant === "brain" ? 8.2 : 7.4);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance"
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.22;
+    renderer.setClearColor(0x000000, 0);
+    renderer.domElement.className = "webgl-canvas";
+    mount.appendChild(renderer.domElement);
+
+    const root = new THREE.Group();
+    scene.add(root);
+
+    scene.add(new THREE.AmbientLight(0x7ea3c8, 1.25));
+    const key = new THREE.PointLight(0x50f2c4, 7.5, 18);
+    key.position.set(-3.2, 3.4, 5.5);
+    scene.add(key);
+    const fill = new THREE.PointLight(0x4fbfff, 6, 16);
+    fill.position.set(3.7, 1.4, 4.4);
+    scene.add(fill);
+    const rim = new THREE.PointLight(0xb56cff, 7, 16);
+    rim.position.set(2.2, -3.5, 2.5);
+    scene.add(rim);
+    const hot = new THREE.PointLight(0xff5db4, 4.5, 13);
+    hot.position.set(-3.2, -1.5, 3.3);
+    scene.add(hot);
+
+    const disposables: Array<THREE.BufferGeometry | THREE.Material> = [];
+    const track = <T extends THREE.BufferGeometry | THREE.Material>(x: T) => {
+      disposables.push(x);
+      return x;
+    };
+
+    if (variant === "brain") {
+      const brain = new THREE.Group();
+      brain.rotation.x = -0.12;
+      brain.rotation.y = -0.18;
+      root.add(brain);
+
+      const leftPalette = [0x46efc2, 0x34d8e7, 0x39adff, 0x5a86ff];
+      const rightPalette = [0x7d68ff, 0x9b64ff, 0xd95cc8, 0xff6aa7];
+      const nodes = [
+        [0.42, 1.04, 0.02, 0.68], [0.78, 0.96, 0.46, 0.70], [0.84, 0.92, -0.44, 0.67],
+        [1.12, 0.56, 0.22, 0.76], [0.60, 0.56, 0.76, 0.68], [0.62, 0.52, -0.76, 0.66],
+        [1.22, 0.04, 0.04, 0.80], [0.72, 0.04, 0.84, 0.72], [0.74, 0.02, -0.84, 0.70],
+        [1.10, -0.56, 0.34, 0.72], [0.66, -0.58, 0.72, 0.66], [0.68, -0.62, -0.68, 0.64],
+        [0.62, -1.02, 0.16, 0.61], [0.47, -1.00, -0.44, 0.58]
+      ] as const;
+
+      for (const hemi of [-1, 1]) {
+        nodes.forEach((n, i) => {
+          const palette = hemi < 0 ? leftPalette : rightPalette;
+          const color = palette[i % palette.length];
+          const mat = track(new THREE.MeshPhysicalMaterial({
+            color,
+            roughness: 0.24,
+            metalness: 0.08,
+            clearcoat: 1,
+            clearcoatRoughness: 0.18,
+            emissive: color,
+            emissiveIntensity: 0.09
+          }));
+          const geo = track(new THREE.SphereGeometry(n[3], 30, 24));
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.position.set(hemi * n[0], n[1], n[2]);
+          mesh.scale.set(1.08 + (i % 3) * 0.05, 0.76 + (i % 4) * 0.035, 0.95 + (i % 2) * 0.08);
+          mesh.rotation.set((i % 5) * 0.14, hemi * (i % 4) * 0.10, hemi * 0.06);
+          brain.add(mesh);
+        });
+      }
+
+      const fissureGeo = track(new THREE.TorusGeometry(0.43, 0.055, 12, 72, Math.PI * 1.25));
+      const fissureMat = track(new THREE.MeshBasicMaterial({
+        color: 0xdffcff,
+        transparent: true,
+        opacity: 0.52
+      }));
+      for (let i = 0; i < 5; i++) {
+        const ridge = new THREE.Mesh(fissureGeo, fissureMat);
+        ridge.rotation.set(Math.PI / 2 + i * 0.08, 0, Math.PI / 2);
+        ridge.scale.set(1.55 + i * 0.08, 0.9, 1);
+        ridge.position.set(0, 0.72 - i * 0.44, 0.74 - (i % 2) * 1.38);
+        brain.add(ridge);
+      }
+
+      const neuralCurves = [
+        [[-1.3, .92, .3], [-.55, .35, 1.05], [.15, .2, .75], [.95, -.55, .6]],
+        [[1.28, .65, -.2], [.6, .15, -1.0], [-.08, -.1, -.72], [-1.0, -.7, -.5]],
+        [[-.85, -1.0, .42], [-.15, -.5, 1.02], [.55, .1, .72], [1.14, .7, .35]],
+        [[.9, 1.05, .2], [.2, .58, -.85], [-.56, .1, -.76], [-1.2, -.35, -.22]]
+      ];
+      neuralCurves.forEach((pts, idx) => {
+        const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(p[0], p[1], p[2])));
+        const geo = track(new THREE.TubeGeometry(curve, 48, 0.018, 6, false));
+        const mat = track(new THREE.MeshBasicMaterial({
+          color: idx % 2 ? 0xf2f7ff : 0x8fffe0,
+          transparent: true,
+          opacity: 0.68
+        }));
+        brain.add(new THREE.Mesh(geo, mat));
+      });
+
+      const floorGeo = track(new THREE.TorusGeometry(2.0, 0.018, 8, 128));
+      const floorMat = track(new THREE.MeshBasicMaterial({ color: 0x48e5c1, transparent: true, opacity: 0.28 }));
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = Math.PI / 2;
+      floor.position.y = -1.72;
+      floor.scale.set(1.28, 1, 0.72);
+      root.add(floor);
+
+      const shapeSpecs = [
+        { geo: new THREE.TorusKnotGeometry(.28, .085, 72, 10), pos: [-2.55, 1.5, .3], color: 0xff6db5, speed: .62 },
+        { geo: new THREE.OctahedronGeometry(.34, 0), pos: [2.55, 1.22, -.15], color: 0x43d9ff, speed: -.55 },
+        { geo: new THREE.IcosahedronGeometry(.30, 0), pos: [-2.35, -1.22, .18], color: 0xffb24c, speed: .44 },
+        { geo: new THREE.TorusGeometry(.31, .09, 14, 48), pos: [2.45, -1.30, .22], color: 0x8a6dff, speed: -.48 }
+      ];
+      shapeSpecs.forEach((spec, i) => {
+        const geo = track(spec.geo);
+        const mat = track(new THREE.MeshPhysicalMaterial({
+          color: spec.color,
+          roughness: .22,
+          metalness: .18,
+          clearcoat: .9,
+          emissive: spec.color,
+          emissiveIntensity: .08
+        }));
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(spec.pos[0], spec.pos[1], spec.pos[2]);
+        mesh.userData.spin = spec.speed;
+        mesh.userData.float = i * 1.3;
+        root.add(mesh);
+      });
+
+      const particleGeo = track(new THREE.BufferGeometry());
+      const positions: number[] = [];
+      for (let i = 0; i < 70; i++) {
+        const a = i * 2.399963;
+        const radius = 2.6 + ((i * 37) % 100) / 100 * 1.35;
+        positions.push(Math.cos(a) * radius, Math.sin(a * 1.37) * 2.15, Math.sin(a) * radius * .42);
+      }
+      particleGeo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      const particleMat = track(new THREE.PointsMaterial({
+        color: 0x73f5da,
+        size: .035,
+        transparent: true,
+        opacity: .46,
+        sizeAttenuation: true
+      }));
+      root.add(new THREE.Points(particleGeo, particleMat));
+    } else {
+      const hubGeo = track(new THREE.IcosahedronGeometry(0.82, 2));
+      const hubMat = track(new THREE.MeshPhysicalMaterial({
+        color: 0x33d9b4,
+        roughness: .18,
+        metalness: .24,
+        clearcoat: 1,
+        emissive: 0x0e8f7a,
+        emissiveIntensity: .2,
+        wireframe: false
+      }));
+      const hub = new THREE.Mesh(hubGeo, hubMat);
+      root.add(hub);
+
+      const wireGeo = track(new THREE.IcosahedronGeometry(1.15, 1));
+      const wireMat = track(new THREE.MeshBasicMaterial({
+        color: 0x62efd0,
+        transparent: true,
+        opacity: .18,
+        wireframe: true
+      }));
+      root.add(new THREE.Mesh(wireGeo, wireMat));
+
+      const ringMat = track(new THREE.MeshBasicMaterial({ color: 0x6a70ff, transparent: true, opacity: .3 }));
+      [1.7, 2.35].forEach((r, i) => {
+        const ring = new THREE.Mesh(track(new THREE.TorusGeometry(r, .018, 8, 128)), ringMat);
+        ring.rotation.x = Math.PI / 2 + i * .42;
+        ring.rotation.z = i * .55;
+        root.add(ring);
+      });
+
+      const palette = [0x51efc1, 0x33c6ff, 0x8b68ff, 0xff68b0, 0xffb347, 0x45d7d0];
+      const outer: THREE.Mesh[] = [];
+      for (let i = 0; i < 6; i++) {
+        const a = (Math.PI * 2 * i) / 6;
+        const mesh = new THREE.Mesh(
+          track(new THREE.OctahedronGeometry(.30 + (i % 2) * .06, 0)),
+          track(new THREE.MeshPhysicalMaterial({
+            color: palette[i],
+            roughness: .2,
+            metalness: .18,
+            clearcoat: 1,
+            emissive: palette[i],
+            emissiveIntensity: .08
+          }))
+        );
+        mesh.position.set(Math.cos(a) * 2.55, Math.sin(a) * 1.65, (i % 2 ? -.35 : .35));
+        mesh.userData.phase = i;
+        root.add(mesh);
+        outer.push(mesh);
+
+        const points = [new THREE.Vector3(0, 0, 0), mesh.position.clone()];
+        const lineGeo = track(new THREE.BufferGeometry().setFromPoints(points));
+        const lineMat = track(new THREE.LineBasicMaterial({ color: palette[i], transparent: true, opacity: .42 }));
+        root.add(new THREE.Line(lineGeo, lineMat));
+      }
+    }
+
+    let pointerX = 0;
+    let pointerY = 0;
+    const onPointer = (event: PointerEvent) => {
+      const rect = mount.getBoundingClientRect();
+      pointerX = ((event.clientX - rect.left) / Math.max(1, rect.width) - .5) * 2;
+      pointerY = ((event.clientY - rect.top) / Math.max(1, rect.height) - .5) * 2;
+    };
+    mount.addEventListener("pointermove", onPointer);
+
+    const resize = () => {
+      const width = Math.max(1, mount.clientWidth);
+      const height = Math.max(1, mount.clientHeight);
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    };
+    const ro = new ResizeObserver(resize);
+    ro.observe(mount);
+    resize();
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const clock = new THREE.Clock();
+    let frame = 0;
+    const animate = () => {
+      const t = clock.getElapsedTime();
+      root.rotation.y += ((pointerX * .16 + Math.sin(t * .22) * .08) - root.rotation.y) * .035;
+      root.rotation.x += ((-pointerY * .09 + Math.cos(t * .18) * .035) - root.rotation.x) * .03;
+      root.position.y = reduceMotion ? 0 : Math.sin(t * .72) * .055;
+
+      root.children.forEach((child) => {
+        const obj = child as THREE.Object3D;
+        if (typeof obj.userData.spin === "number") {
+          obj.rotation.x += obj.userData.spin * .006;
+          obj.rotation.y += obj.userData.spin * .009;
+          obj.position.y += Math.sin(t * 1.2 + obj.userData.float) * .0008;
+        }
+        if (typeof obj.userData.phase === "number") {
+          obj.rotation.x += .006 + obj.userData.phase * .0002;
+          obj.rotation.y += .009;
+        }
+      });
+
+      renderer.render(scene, camera);
+      frame = requestAnimationFrame(animate);
+    };
+    animate();
+
+    return () => {
+      cancelAnimationFrame(frame);
+      ro.disconnect();
+      mount.removeEventListener("pointermove", onPointer);
+      renderer.dispose();
+      disposables.forEach((d) => d.dispose());
+      renderer.domElement.remove();
+    };
+  }, [variant]);
+
+  return <div ref={mountRef} className={"webgl-scene webgl-" + variant} aria-hidden="true" />;
 }
 
 function HeroNetwork() {
@@ -118,26 +346,20 @@ function HeroNetwork() {
     ["Llama", "ll", "node-6", "cyan"]
   ];
   return (
-    <div className="hero-visual" aria-label="مغز هوش مصنوعی Bavaan و اتصال به چند مدل">
+    <div className="hero-visual" aria-label="مغز سه‌بعدی Bavaan و اتصال به چند مدل">
       <div className="hero-grid" />
       <div className="hero-glow" />
       <div className="orbit orbit-a" />
       <div className="orbit orbit-b" />
       <div className="orbit orbit-c" />
-      <BrainGraphic />
+      <WebGLArt variant="brain" />
       {nodes.map(([name, short, cls, tone]) => (
         <div key={name} className={cn("model-node", cls, "tone-" + tone)}>
           <span className="model-node-mark">{short}</span>
           <span>{name}</span>
         </div>
       ))}
-      <div className="vector-cube cube-a"><i /><b /><em /></div>
-      <div className="vector-cube cube-b"><i /><b /><em /></div>
-      <div className="vector-orb orb-a" />
-      <div className="vector-orb orb-b" />
-      <div className="signal-dot signal-1" />
-      <div className="signal-dot signal-2" />
-      <div className="signal-dot signal-3" />
+      <div className="scene-caption"><span>B</span><strong>Bavaan Core</strong><small>Real-time 3D AI mesh</small></div>
     </div>
   );
 }
@@ -254,13 +476,9 @@ function RouterVisual() {
   return (
     <div className="router-visual">
       <div className="router-grid" />
-      <div className="router-core"><Layers3 className="size-6" /><strong>Bavaan</strong><small>Smart Router</small></div>
+      <WebGLArt variant="router" />
+      <div className="router-core-label"><Layers3 className="size-5" /><strong>Bavaan</strong><small>Smart Router</small></div>
       {nodes.map((n, i) => <div key={n} className={"router-node router-node-" + (i + 1)}>{n}</div>)}
-      <span className="route-line route-line-1" />
-      <span className="route-line route-line-2" />
-      <span className="route-line route-line-3" />
-      <span className="route-line route-line-4" />
-      <span className="route-line route-line-5" />
     </div>
   );
 }
