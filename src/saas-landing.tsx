@@ -1,5 +1,7 @@
 import React, { ReactNode, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { createRoot } from "react-dom/client";
 import {
   ArrowRight, Bot, Braces, Check, CheckCircle2, Code2, Cpu,
@@ -103,121 +105,162 @@ function WebGLArt({ variant }: { variant: "brain" | "router" }) {
     };
 
     if (variant === "brain") {
-      const brain = new THREE.Group();
-      brain.rotation.x = -0.12;
-      brain.rotation.y = -0.18;
-      root.add(brain);
+      const stage = new THREE.Group();
+      stage.rotation.set(-0.08, -0.10, 0.02);
+      root.add(stage);
 
-      const leftPalette = [0x46efc2, 0x34d8e7, 0x39adff, 0x5a86ff];
-      const rightPalette = [0x7d68ff, 0x9b64ff, 0xd95cc8, 0xff6aa7];
-      const nodes = [
-        [0.42, 1.04, 0.02, 0.68], [0.78, 0.96, 0.46, 0.70], [0.84, 0.92, -0.44, 0.67],
-        [1.12, 0.56, 0.22, 0.76], [0.60, 0.56, 0.76, 0.68], [0.62, 0.52, -0.76, 0.66],
-        [1.22, 0.04, 0.04, 0.80], [0.72, 0.04, 0.84, 0.72], [0.74, 0.02, -0.84, 0.70],
-        [1.10, -0.56, 0.34, 0.72], [0.66, -0.58, 0.72, 0.66], [0.68, -0.62, -0.68, 0.64],
-        [0.62, -1.02, 0.16, 0.61], [0.47, -1.00, -0.44, 0.58]
-      ] as const;
-
-      for (const hemi of [-1, 1]) {
-        nodes.forEach((n, i) => {
-          const palette = hemi < 0 ? leftPalette : rightPalette;
-          const color = palette[i % palette.length];
-          const mat = track(new THREE.MeshPhysicalMaterial({
-            color,
-            roughness: 0.24,
-            metalness: 0.08,
-            clearcoat: 1,
-            clearcoatRoughness: 0.18,
-            emissive: color,
-            emissiveIntensity: 0.09
-          }));
-          const geo = track(new THREE.SphereGeometry(n[3], 30, 24));
-          const mesh = new THREE.Mesh(geo, mat);
-          mesh.position.set(hemi * n[0], n[1], n[2]);
-          mesh.scale.set(1.08 + (i % 3) * 0.05, 0.76 + (i % 4) * 0.035, 0.95 + (i % 2) * 0.08);
-          mesh.rotation.set((i % 5) * 0.14, hemi * (i % 4) * 0.10, hemi * 0.06);
-          brain.add(mesh);
-        });
-      }
-
-      const fissureGeo = track(new THREE.TorusGeometry(0.43, 0.055, 12, 72, Math.PI * 1.25));
-      const fissureMat = track(new THREE.MeshBasicMaterial({
-        color: 0xdffcff,
+      // Clean fallback while the anatomical GLB is loading.
+      const fallbackGeo = track(new THREE.IcosahedronGeometry(1.28, 3));
+      const fallbackMat = track(new THREE.MeshPhysicalMaterial({
+        color: 0x203a5d,
+        roughness: .42,
+        metalness: .08,
         transparent: true,
-        opacity: 0.52
+        opacity: .28,
+        wireframe: true,
+        emissive: 0x2bd6c0,
+        emissiveIntensity: .15
       }));
-      for (let i = 0; i < 5; i++) {
-        const ridge = new THREE.Mesh(fissureGeo, fissureMat);
-        ridge.rotation.set(Math.PI / 2 + i * 0.08, 0, Math.PI / 2);
-        ridge.scale.set(1.55 + i * 0.08, 0.9, 1);
-        ridge.position.set(0, 0.72 - i * 0.44, 0.74 - (i % 2) * 1.38);
-        brain.add(ridge);
-      }
+      const fallback = new THREE.Mesh(fallbackGeo, fallbackMat);
+      fallback.scale.set(1.25, .9, 1);
+      stage.add(fallback);
 
-      const neuralCurves = [
-        [[-1.3, .92, .3], [-.55, .35, 1.05], [.15, .2, .75], [.95, -.55, .6]],
-        [[1.28, .65, -.2], [.6, .15, -1.0], [-.08, -.1, -.72], [-1.0, -.7, -.5]],
-        [[-.85, -1.0, .42], [-.15, -.5, 1.02], [.55, .1, .72], [1.14, .7, .35]],
-        [[.9, 1.05, .2], [.2, .58, -.85], [-.56, .1, -.76], [-1.2, -.35, -.22]]
+      const haloMat = track(new THREE.MeshBasicMaterial({
+        color: 0x53e8cb,
+        transparent: true,
+        opacity: .24
+      }));
+      const halo = new THREE.Mesh(track(new THREE.TorusGeometry(2.05, .018, 8, 128)), haloMat);
+      halo.rotation.x = Math.PI / 2;
+      halo.position.y = -1.70;
+      halo.scale.set(1.25, 1, .72);
+      root.add(halo);
+
+      // Real anatomical brain: Z-Anatomy / BodyParts3D, CC BY-SA 4.0.
+      const draco = new DRACOLoader();
+      draco.setDecoderPath("https://cdn.jsdelivr.net/gh/itayinbarr/brainproject@2929e94f521a8ddceab26bc100a98dc06b0da060/brain-atlas/vendor/draco/");
+      const loader = new GLTFLoader();
+      loader.setDRACOLoader(draco);
+
+      let cancelled = false;
+      loader.load(
+        "https://cdn.jsdelivr.net/gh/itayinbarr/brainproject@2929e94f521a8ddceab26bc100a98dc06b0da060/brain-atlas/models/brain.glb",
+        (gltf) => {
+          if (cancelled) return;
+
+          const specimen = gltf.scene;
+          const allMeshes: THREE.Mesh[] = [];
+          const hiddenCats = new Set(["arteries", "veins_sinuses", "cranial_nerves", "meninges_dura", "tracts"]);
+          const palette: Record<string, number> = {
+            cortex: 0x48d9c7,
+            white_matter: 0x8fc8ff,
+            deep_grey: 0x8a6dff,
+            diencephalon: 0xb36df4,
+            brainstem: 0x55dfb4,
+            cerebellum: 0x4ea9ff,
+            ventricles: 0xdf6fc8,
+            other: 0x62d8d1
+          };
+
+          specimen.traverse((obj) => {
+            const mesh = obj as THREE.Mesh;
+            if (!mesh.isMesh) return;
+            const ex = (mesh.userData || {}) as Record<string, any>;
+            const cat = String(ex.bx_cat || mesh.parent?.userData?.bx_cat || "other");
+            const side = String(ex.bx_side || mesh.parent?.userData?.bx_side || "median");
+            mesh.visible = !hiddenCats.has(cat);
+            if (!mesh.visible) return;
+
+            const base = new THREE.Color(palette[cat] || palette.other);
+            if (side === "right") base.offsetHSL(.075, .05, .02);
+            if (side === "left") base.offsetHSL(-.025, .04, 0);
+
+            const mat = track(new THREE.MeshPhysicalMaterial({
+              color: base,
+              roughness: cat === "cortex" ? .50 : .40,
+              metalness: .03,
+              clearcoat: .72,
+              clearcoatRoughness: .36,
+              emissive: base.clone().multiplyScalar(.11),
+              emissiveIntensity: .24,
+              transparent: true,
+              opacity: cat === "ventricles" ? .72 : .96,
+              side: THREE.FrontSide
+            }));
+            mesh.material = mat;
+            allMeshes.push(mesh);
+          });
+
+          const core = new THREE.Box3();
+          let hasCore = false;
+          allMeshes.forEach((mesh) => {
+            const ex = (mesh.userData || {}) as Record<string, any>;
+            const pex = (mesh.parent?.userData || {}) as Record<string, any>;
+            if (ex.bx_core === 1 || ex.bx_core === true || pex.bx_core === 1 || pex.bx_core === true) {
+              core.expandByObject(mesh);
+              hasCore = true;
+            }
+          });
+          if (!hasCore) core.setFromObject(specimen);
+
+          const center = core.getCenter(new THREE.Vector3());
+          specimen.position.sub(center);
+          const radius = core.getBoundingSphere(new THREE.Sphere()).radius || 1;
+          specimen.scale.setScalar(2.05 / radius);
+          specimen.rotation.set(-0.03, Math.PI, -0.02);
+          specimen.position.y = .02;
+
+          stage.remove(fallback);
+          stage.add(specimen);
+          stage.userData.specimen = specimen;
+        },
+        undefined,
+        () => {
+          // Keep the subtle hologram fallback if the CDN is unavailable.
+        }
+      );
+
+      const accents = [
+        { geo: new THREE.TorusKnotGeometry(.18, .055, 64, 10), pos: [-2.45, 1.28, -.2], color: 0xff70ba, spin: .42 },
+        { geo: new THREE.OctahedronGeometry(.24, 0), pos: [2.38, 1.05, -.1], color: 0x43cfff, spin: -.48 },
+        { geo: new THREE.IcosahedronGeometry(.20, 0), pos: [-2.24, -1.05, .1], color: 0xffb24c, spin: .36 },
+        { geo: new THREE.TorusGeometry(.22, .06, 12, 42), pos: [2.20, -1.08, .05], color: 0x8a70ff, spin: -.34 }
       ];
-      neuralCurves.forEach((pts, idx) => {
-        const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(p[0], p[1], p[2])));
-        const geo = track(new THREE.TubeGeometry(curve, 48, 0.018, 6, false));
-        const mat = track(new THREE.MeshBasicMaterial({
-          color: idx % 2 ? 0xf2f7ff : 0x8fffe0,
-          transparent: true,
-          opacity: 0.68
-        }));
-        brain.add(new THREE.Mesh(geo, mat));
-      });
-
-      const floorGeo = track(new THREE.TorusGeometry(2.0, 0.018, 8, 128));
-      const floorMat = track(new THREE.MeshBasicMaterial({ color: 0x48e5c1, transparent: true, opacity: 0.28 }));
-      const floor = new THREE.Mesh(floorGeo, floorMat);
-      floor.rotation.x = Math.PI / 2;
-      floor.position.y = -1.72;
-      floor.scale.set(1.28, 1, 0.72);
-      root.add(floor);
-
-      const shapeSpecs = [
-        { geo: new THREE.TorusKnotGeometry(.28, .085, 72, 10), pos: [-2.55, 1.5, .3], color: 0xff6db5, speed: .62 },
-        { geo: new THREE.OctahedronGeometry(.34, 0), pos: [2.55, 1.22, -.15], color: 0x43d9ff, speed: -.55 },
-        { geo: new THREE.IcosahedronGeometry(.30, 0), pos: [-2.35, -1.22, .18], color: 0xffb24c, speed: .44 },
-        { geo: new THREE.TorusGeometry(.31, .09, 14, 48), pos: [2.45, -1.30, .22], color: 0x8a6dff, speed: -.48 }
-      ];
-      shapeSpecs.forEach((spec, i) => {
-        const geo = track(spec.geo);
-        const mat = track(new THREE.MeshPhysicalMaterial({
-          color: spec.color,
-          roughness: .22,
-          metalness: .18,
-          clearcoat: .9,
-          emissive: spec.color,
-          emissiveIntensity: .08
-        }));
-        const mesh = new THREE.Mesh(geo, mat);
+      accents.forEach((spec, i) => {
+        const mesh = new THREE.Mesh(
+          track(spec.geo),
+          track(new THREE.MeshPhysicalMaterial({
+            color: spec.color,
+            roughness: .28,
+            metalness: .10,
+            clearcoat: .85,
+            emissive: spec.color,
+            emissiveIntensity: .08
+          }))
+        );
         mesh.position.set(spec.pos[0], spec.pos[1], spec.pos[2]);
-        mesh.userData.spin = spec.speed;
-        mesh.userData.float = i * 1.3;
+        mesh.userData.spin = spec.spin;
+        mesh.userData.float = i * 1.6;
         root.add(mesh);
       });
 
-      const particleGeo = track(new THREE.BufferGeometry());
-      const positions: number[] = [];
-      for (let i = 0; i < 70; i++) {
+      const dotsGeo = track(new THREE.BufferGeometry());
+      const dots: number[] = [];
+      for (let i = 0; i < 54; i++) {
         const a = i * 2.399963;
-        const radius = 2.6 + ((i * 37) % 100) / 100 * 1.35;
-        positions.push(Math.cos(a) * radius, Math.sin(a * 1.37) * 2.15, Math.sin(a) * radius * .42);
+        const rr = 2.5 + ((i * 29) % 100) / 100 * 1.25;
+        dots.push(Math.cos(a) * rr, Math.sin(a * 1.21) * 1.85, Math.sin(a) * rr * .30);
       }
-      particleGeo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-      const particleMat = track(new THREE.PointsMaterial({
-        color: 0x73f5da,
-        size: .035,
-        transparent: true,
-        opacity: .46,
-        sizeAttenuation: true
-      }));
-      root.add(new THREE.Points(particleGeo, particleMat));
+      dotsGeo.setAttribute("position", new THREE.Float32BufferAttribute(dots, 3));
+      root.add(new THREE.Points(
+        dotsGeo,
+        track(new THREE.PointsMaterial({ color: 0x76efdc, size: .026, transparent: true, opacity: .34 }))
+      ));
+
+      root.userData.cleanupBrain = () => {
+        cancelled = true;
+        draco.dispose();
+      };
     } else {
       const hubGeo = track(new THREE.IcosahedronGeometry(0.82, 2));
       const hubMat = track(new THREE.MeshPhysicalMaterial({
@@ -325,6 +368,7 @@ function WebGLArt({ variant }: { variant: "brain" | "router" }) {
 
     return () => {
       cancelAnimationFrame(frame);
+      if (typeof root.userData.cleanupBrain === "function") root.userData.cleanupBrain();
       ro.disconnect();
       mount.removeEventListener("pointermove", onPointer);
       renderer.dispose();
@@ -341,9 +385,7 @@ function HeroNetwork() {
     ["OpenAI", "oai", "node-1", "mint"],
     ["Claude", "cl", "node-2", "violet"],
     ["Gemini", "gm", "node-3", "blue"],
-    ["DeepSeek", "ds", "node-4", "pink"],
-    ["Qwen", "qw", "node-5", "amber"],
-    ["Llama", "ll", "node-6", "cyan"]
+    ["DeepSeek", "ds", "node-4", "pink"]
   ];
   return (
     <div className="hero-visual" aria-label="مغز سه‌بعدی Bavaan و اتصال به چند مدل">
@@ -359,7 +401,7 @@ function HeroNetwork() {
           <span>{name}</span>
         </div>
       ))}
-      <div className="scene-caption"><span>B</span><strong>Bavaan Core</strong><small>Real-time 3D AI mesh</small></div>
+      <div className="scene-caption"><span>B</span><strong>Bavaan Core</strong><small>Multi-model intelligence</small></div>
     </div>
   );
 }
