@@ -679,7 +679,7 @@ function SaasLanding() {
       <footer className="site-footer">
         <div className="page-shell footer-inner">
           <div className="footer-brand"><span className="brand-mark small">B</span><span>Bavaan AI · ai.bavaan.ir</span></div>
-          <div><a href="/docs">مستندات</a><a href="/pricing">قیمت‌گذاری</a><a href="/models">مدل‌ها</a></div>
+          <div><a href="/docs">مستندات</a><a href="/pricing">قیمت‌گذاری</a><a href="/models">مدل‌ها</a><a href="https://github.com/itayinbarr/brainproject" target="_blank" rel="noreferrer">3D asset credits</a></div>
         </div>
       </footer>
     </div>
