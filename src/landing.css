@@ -1074,3 +1074,69 @@
   .webgl-router{inset:2% -3%}
   .router-core-label{width:88px;height:78px;border-radius:20px}
 }
+
+
+/* Hero cleanup: real brain, less UI chrome */
+.hero-visual{
+  min-height:470px;
+  border-color:rgba(91,225,202,.12);
+  border-radius:30px;
+  background:
+    radial-gradient(circle at 50% 45%,rgba(62,220,208,.10),transparent 30%),
+    radial-gradient(circle at 56% 52%,rgba(111,94,255,.08),transparent 44%),
+    linear-gradient(145deg,rgba(12,24,41,.66),rgba(7,14,27,.44));
+  box-shadow:
+    0 34px 90px rgba(1,7,17,.34),
+    inset 0 1px 0 rgba(255,255,255,.025);
+}
+.hero-visual::after{display:none}
+.hero-grid{opacity:.20;mask-image:radial-gradient(circle at center,#000 12%,transparent 72%)}
+.webgl-brain{inset:-1% -2% 1%;filter:none}
+.webgl-canvas{filter:saturate(1.02) contrast(1.02)}
+.hero-glow{
+  width:360px;height:360px;
+  background:radial-gradient(circle,rgba(72,226,199,.10),rgba(73,153,255,.045) 42%,transparent 70%);
+  filter:blur(24px);
+}
+.orbit-a{width:275px;height:275px;border-color:rgba(78,225,199,.12)}
+.orbit-b{width:372px;height:372px;border-color:rgba(76,148,255,.08)}
+.orbit-c{width:322px;height:322px;border-color:rgba(145,104,255,.10)}
+.model-node{
+  min-width:92px;
+  min-height:38px;
+  padding:.34rem .50rem;
+  border-radius:12px;
+  background:linear-gradient(145deg,rgba(14,25,43,.70),rgba(8,15,28,.58));
+  border-color:rgba(255,255,255,.075);
+  box-shadow:0 12px 24px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.04);
+}
+.model-node::before{opacity:.32;filter:blur(10px)}
+.model-node-mark{width:23px;height:23px;border-radius:7px;font-size:.46rem}
+.node-1{right:7%;top:14%}
+.node-2{left:7%;top:14%}
+.node-3{right:6%;bottom:15%}
+.node-4{left:6%;bottom:15%}
+.scene-caption{
+  bottom:13px;
+  min-width:140px;
+  padding:.40rem .58rem;
+  border-color:rgba(255,255,255,.075);
+  background:rgba(8,16,29,.62);
+  box-shadow:0 10px 24px rgba(0,0,0,.22);
+}
+.scene-caption>span{width:23px;height:23px;border-radius:8px}
+.scene-caption strong{font-size:.55rem}
+.scene-caption small{font-size:.43rem}
+
+@media (max-width:760px){
+  .hero-visual{min-height:430px}
+  .webgl-brain{inset:1% -4% 2%}
+  .node-1{right:3%;top:13%}.node-2{left:3%;top:13%}
+  .node-3{right:3%;bottom:14%}.node-4{left:3%;bottom:14%}
+}
+@media (max-width:520px){
+  .hero-visual{min-height:390px}
+  .model-node{min-width:70px;padding:.28rem .38rem;font-size:.48rem}
+  .model-node-mark{width:18px;height:18px;font-size:.38rem}
+  .scene-caption{bottom:8px}
+}
